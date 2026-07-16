@@ -1,26 +1,10 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEO-NEXUS // Cyberpunk Command Center</title>
+    <title>Paper Craft 2D</title>
     <style>
-        /* --- CORE DESIGN SYSTEM & VARIABLES --- */
-        :root {
-            --bg-deep: #0a0a12;
-            --bg-surface: #121225;
-            --bg-card: #181832;
-            --neon-cyan: #00f3ff;
-            --neon-magenta: #ff0055;
-            --neon-green: #39ff14;
-            --neon-yellow: #ffe600;
-            --text-main: #e2e2ec;
-            --text-muted: #7a7a9a;
-            --font-cyber: 'Courier New', Courier, monospace;
-            --glitch-transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-
-        /* --- GLOBAL RESET & SCROLLBAR --- */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -29,310 +13,287 @@
         }
 
         body {
-            background-color: var(--bg-deep);
-            color: var(--text-main);
-            font-family: var(--font-cyber);
-            overflow-x: hidden;
-            min-height: 100vh;
-        }
-
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--bg-deep);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--neon-cyan);
-            border-radius: 3px;
-        }
-
-        /* --- BACKGROUND CANVAS ANIMATION --- */
-        #particle-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
-            pointer-events: none;
-            opacity: 0.15;
-        }
-
-        /* --- GLITCH FX ANIMATION --- */
-        @keyframes cyber-glitch {
-            0% { clip-path: inset(40% 0 61% 0); transform: skew(0.3deg); }
-            20% { clip-path: inset(92% 0 1% 0); transform: skew(-0.5deg); }
-            40% { clip-path: inset(15% 0 80% 0); transform: skew(0.5deg); }
-            60% { clip-path: inset(80% 0 5% 0); transform: skew(-0.3deg); }
-            80% { clip-path: inset(3% 0 92% 0); transform: skew(0.8deg); }
-            100% { clip-path: inset(40% 0 61% 0); transform: skew(0deg); }
-        }
-
-        @keyframes scanline {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100%); }
-        }
-
-        /* --- INTERFACE CONTAINER --- */
-        .app-container {
-            position: relative;
-            z-index: 2;
+            background: #111;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        /* SCANLINE OVERLAY EFFECT */
-        .app-container::before {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 9999;
-            background-size: 100% 4px, 6px 100%;
-            pointer-events: none;
-        }
-
-        /* --- HEADER NAVIGATION UI --- */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--neon-cyan);
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
-        }
-
-        .brand-title {
-            font-size: 1.8rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            color: #fff;
-            text-shadow: 0 0 10px var(--neon-cyan);
-            position: relative;
-        }
-
-        .brand-title::after {
-            content: 'SYSTEM_ONLINE';
-            position: absolute;
-            bottom: -15px;
-            left: 0;
-            font-size: 0.6rem;
-            color: var(--neon-green);
-            letter-spacing: 2px;
-        }
-
-        .nav-tabs {
-            display: flex;
-            gap: 10px;
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: 1px solid var(--text-muted);
-            color: var(--text-muted);
-            padding: 8px 16px;
-            cursor: pointer;
-            font-family: var(--font-cyber);
-            text-transform: uppercase;
-            font-weight: bold;
-            transition: var(--glitch-transition);
-        }
-
-        .tab-btn.active, .tab-btn:hover {
-            color: var(--neon-cyan);
-            border-color: var(--neon-cyan);
-            background: rgba(0, 243, 255, 0.05);
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
-        }
-
-        /* --- METRICS HUD OVERVIEW --- */
-        .hud-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-
-        .hud-card {
-            background: var(--bg-surface);
-            border-left: 4px solid var(--neon-magenta);
-            padding: 15px;
-            border-radius: 0 8px 8px 0;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 4px 4px 10px rgba(0,0,0,0.3);
-        }
-
-        .hud-card.cyan-theme { border-left-color: var(--neon-cyan); }
-        .hud-card.green-theme { border-left-color: var(--neon-green); }
-        .hud-card.yellow-theme { border-left-color: var(--neon-yellow); }
-
-        .hud-card::before {
-            content: '';
-            position: absolute;
-            top: 0; right: 0;
-            width: 30px; height: 30px;
-            background: linear-gradient(45deg, transparent 45%, var(--text-muted) 50%, transparent 55%);
-            opacity: 0.2;
-        }
-
-        .hud-label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .hud-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-            margin-top: 5px;
-            color: #fff;
-        }
-
-        /* --- DASHBOARD TABS PAGES --- */
-        .tab-content {
-            display: none;
-            grid-template-columns: 2fr 1fr;
-            gap: 25px;
-        }
-
-        .tab-content.active-content {
-            display: grid;
-        }
-
-        @media (max-width: 900px) {
-            .tab-content { grid-template-columns: 1fr; }
-        }
-
-        /* --- GENERAL CARD WRAPPERS --- */
-        .panel {
-            background-color: var(--bg-card);
-            border: 1px solid rgba(255,255,255,0.05);
-            padding: 20px;
-            border-radius: 4px;
-            position: relative;
-        }
-
-        .panel-header {
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 15px;
-            color: var(--neon-cyan);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px dashed rgba(0, 243, 255, 0.2);
-            padding-bottom: 8px;
-        }
-
-        /* --- MODULE: INTERACTIVE DATA MATRIX GRID --- */
-        .matrix-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-            gap: 6px;
-            margin-bottom: 15px;
-        }
-
-        .matrix-node {
-            aspect-ratio: 1;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.2s ease;
+            height: 100vh;
         }
 
-        .matrix-node:hover {
-            background: var(--neon-cyan);
-            color: var(--bg-deep);
-            box-shadow: 0 0 12px var(--neon-cyan);
-            transform: scale(1.1);
+        #game-container {
+            position: relative;
+            border: 4px solid #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
         }
 
-        .matrix-node.active-node {
-            background: rgba(57, 255, 20, 0.15);
-            border-color: var(--neon-green);
-            color: var(--neon-green);
+        canvas {
+            display: block;
+            background: #70a5ff; /* Sky color */
         }
 
-        /* --- MODULE: REAL-TIME CONSOLE LOGGER --- */
-        .terminal-log {
-            background-color: #05050d;
-            border: 1px solid #1a1a3a;
-            border-radius: 4px;
-            height: 250px;
-            padding: 12px;
-            overflow-y: auto;
-            font-size: 0.75rem;
-            color: var(--neon-green);
+        /* --- UI OVERLAYS --- */
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.6);
+            padding: 10px 15px;
+            border-radius: 5px;
+            pointer-events: none;
+            font-size: 14px;
             line-height: 1.5;
         }
 
-        .log-entry::before {
-            content: "[SYS_MSG] > ";
-            color: var(--neon-magenta);
-        }
-
-        .log-entry.warn::before {
-            content: "[WARNING] > ";
-            color: var(--neon-yellow);
-        }
-
-        /* --- MODULE: STATUS CONTROL PANEL --- */
-        .control-list {
+        #hotbar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .control-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background: rgba(255,255,255,0.02);
+            background: rgba(0,0,0,0.7);
+            padding: 6px;
             border-radius: 4px;
+            border: 2px solid #555;
+            gap: 5px;
         }
 
-        /* CSS Toggles Switch */
-        .switch {
-            position: relative;
-            display: inline-block;
+        .hotbar-slot {
             width: 44px;
-            height: 22px;
-        }
-
-        .switch input { opacity: 0; width: 0; height: 0; }
-
-        .slider {
-            position: absolute;
+            height: 44px;
+            border: 2px solid #333;
+            background: #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
             cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #333;
-            transition: .3s;
-            border-radius: 22px;
         }
 
-        .slider:before {
+        .hotbar-slot.selected {
+            border-color: #fff;
+            background: #444;
+        }
+
+        .slot-preview {
+            width: 24px;
+            height: 24px;
+        }
+
+        .slot-key {
             position: absolute;
-            content: "";
-            height: 16px; width: 16px;
-            left: 3px; bottom: 3px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
+            top: 2px;
+            left: 4px;
+            font-size: 10px;
+            color: #aaa;
         }
 
+        #instructions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.6);
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            text-align: right;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="480"></canvas>
+        
+        <div id="hud">
+            <div>POS: X: <span id="pos-x">0</span>, Y: <span id="pos-y">0</span></div>
+            <div>BLOCKS BROKEN: <span id="score-break">0</span></div>
+        </div>
+
+        <div id="instructions">
+            [A][D] - Move Left/Right<br>
+            [SPACE] - Jump<br>
+            [Left Click] - Mine Block<br>
+            [Right Click] - Place Block<br>
+            [1-4] - Select Hotbar Item
+        </div>
+
+        <div id="hotbar">
+            <div class="hotbar-slot selected" data-block="1">
+                <span class="slot-key">1</span>
+                <div class="slot-preview" style="background: #5c3a21; border-top: 6px solid #4caf50;"></div>
+            </div>
+            <div class="hotbar-slot" data-block="2">
+                <span class="slot-key">2</span>
+                <div class="slot-preview" style="background: #5c3a21;"></div>
+            </div>
+            <div class="hotbar-slot" data-block="3">
+                <span class="slot-key">3</span>
+                <div class="slot-preview" style="background: #737373;"></div>
+            </div>
+            <div class="hotbar-slot" data-block="4">
+                <span class="slot-key">4</span>
+                <div class="slot-preview" style="background: #a0764c; border: 2px dashed #6d4c2b;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // --- GAME CONFIGURATION ---
+        const BLOCK_SIZE = 32;
+        const WORLD_WIDTH = 120; // total blocks wide
+        const WORLD_HEIGHT = 30; // total blocks deep
+        const GRAVITY = 0.5;
+
+        // Block IDs and Colors
+        const BLOCKS = {
+            0: { name: "Air", color: null },
+            1: { name: "Grass", color: "#4caf50", topColor: "#4caf50" },
+            2: { name: "Dirt", color: "#5c3a21" },
+            3: { name: "Stone", color: "#737373" },
+            4: { name: "Wood Planks", color: "#a0764c" }
+        };
+
+        // --- STATE MANAGEMENT ---
+        let world = [];
+        let blocksBroken = 0;
+        let selectedBlockType = 1; // Default to grass/dirt
+
+        const player = {
+            x: (WORLD_WIDTH * BLOCK_SIZE) / 2,
+            y: 0,
+            width: 22,
+            height: 54,
+            vx: 0,
+            vy: 0,
+            speed: 4,
+            jumpForce: 10,
+            grounded: false
+        };
+
+        const camera = {
+            x: 0,
+            y: 0
+        };
+
+        const keys = {};
+
+        // --- MAP GENERATION (Perlin-like basic sine terrain) ---
+        function generateWorld() {
+            for (let x = 0; x < WORLD_WIDTH; x++) {
+                world[x] = [];
+                // Generate a rolling surface height line
+                let surfaceY = Math.floor(12 + Math.sin(x * 0.15) * 3 + Math.cos(x * 0.05) * 2);
+                
+                for (let y = 0; y < WORLD_HEIGHT; y++) {
+                    if (y < surfaceY) {
+                        world[x][y] = 0; // Air
+                    } else if (y === surfaceY) {
+                        world[x][y] = 1; // Grass
+                    } else if (y > surfaceY && y < surfaceY + 4) {
+                        world[x][y] = 2; // Dirt
+                    } else {
+                        world[x][y] = 3; // Stone
+                    }
+                }
+            }
+            // Spawn player safely slightly above surface level
+            const spawnXBlock = Math.floor(WORLD_WIDTH / 2);
+            let spawnYBlock = 0;
+            while(world[spawnXBlock][spawnYBlock] === 0) {
+                spawnYBlock++;
+            }
+            player.x = spawnXBlock * BLOCK_SIZE;
+            player.y = (spawnYBlock - 3) * BLOCK_SIZE;
+        }
+
+        // --- INTERACTION HANDLING ---
+        window.addEventListener("keydown", (e) => {
+            keys[e.code] = true;
+            if (["Digit1", "Digit2", "Digit3", "Digit4"].includes(e.code)) {
+                const index = e.code.replace("Digit", "");
+                setActiveSlot(index);
+            }
+        });
+        window.addEventListener("keyup", (e) => keys[e.code] = false);
+
+        // Prevent right click menu on game canvas
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        canvas.addEventListener("mousedown", (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left + camera.x;
+            const clickY = e.clientY - rect.top + camera.y;
+
+            const blockX = Math.floor(clickX / BLOCK_SIZE);
+            const blockY = Math.floor(clickY / BLOCK_SIZE);
+
+            if (blockX < 0 || blockX >= WORLD_WIDTH || blockY < 0 || blockY >= WORLD_HEIGHT) return;
+
+            if (e.button === 0) { 
+                // Left Click: Break Block
+                if (world[blockX][blockY] !== 0) {
+                    world[blockX][blockY] = 0;
+                    blocksBroken++;
+                    document.getElementById("score-break").innerText = blocksBroken;
+                }
+            } else if (e.button === 2) { 
+                // Right Click: Place Block
+                // Check that it's replacing air, and doesn't overlap the player
+                if (world[blockX][blockY] === 0) {
+                    const blockLeft = blockX * BLOCK_SIZE;
+                    const blockRight = blockLeft + BLOCK_SIZE;
+                    const blockTop = blockY * BLOCK_SIZE;
+                    const blockBottom = blockTop + BLOCK_SIZE;
+
+                    const intersectsPlayer = (
+                        player.x < blockRight &&
+                        player.x + player.width > blockLeft &&
+                        player.y < blockBottom &&
+                        player.y + player.height > blockTop
+                    );
+
+                    if (!intersectsPlayer) {
+                        world[blockX][blockY] = selectedBlockType;
+                    }
+                }
+            }
+        });
+
+        function setActiveSlot(num) {
+            document.querySelectorAll('.hotbar-slot').forEach(slot => slot.classList.remove('selected'));
+            const activeSlot = document.querySelector(`.hotbar-slot[data-block="${num}"]`);
+            if (activeSlot) {
+                activeSlot.classList.add('selected');
+                selectedBlockType = parseInt(num);
+            }
+        }
+
+        // Click hotbar slots directly
+        document.querySelectorAll('.hotbar-slot').forEach(slot => {
+            slot.addEventListener('click', () => {
+                setActiveSlot(slot.getAttribute('data-block'));
+            });
+        });
+
+        // --- PHYSICAL COLLISION LOGIC ---
+        function checkBlockCollision(x, y) {
+            const blockX = Math.floor(x / BLOCK_SIZE);
+            const blockY = Math.floor(y / BLOCK_SIZE);
+
+            if (blockX < 0 || blockX >= WORLD_WIDTH || blockY < 0 || blockY >= WORLD_HEIGHT) {
+                return true; // Boundaries behave solid
+            }
+            return world[blockX][blockY] !== 0;
+        }
+
+        function updatePhysics() {
+            // Apply Movement Input
+            if (keys["KeyA"] || keys["ArrowLeft"]) player.vx = -player.speed;
