@@ -1,14 +1,77 @@
 <!DOCTYPE html>
-<html>
-   <title>test</title>
-  <p>hello this is an test by ry+rhys</p>
-  <p>look at this:<br/>
-  I can INDENT THIS IS MY FIRST time using html !</p>
-  <div style="color: green";>
-  <p>look at the color</p>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fun Game</title>
+<style>
+  body {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: 'Comic Sans MS', sans-serif;
+    text-align: center;
+    overflow: hidden;
+  }
+  h1 {
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    font-size: 3rem;
+  }
+  .buttons {
+    margin-top: 50px;
+    position: relative;
+    width: 300px;
+    height: 100px;
+  }
+  button {
+    font-size: 1.5rem;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+  }
+  #yes-btn {
+    background-color: #2ecc71;
+    color: white;
+    position: absolute;
+    left: 20px;
+  }
+  #no-btn {
+    background-color: #e74c3c;
+    color: white;
+    position: absolute;
+    right: 20px;
+  }
+  #yes-btn:hover {
+    transform: scale(1.1);
+  }
+</style>
+</head>
+<body>
+
+  <h1>Is coding fun?</h1>
+  
+  <div class="buttons">
+    <button id="yes-btn" onclick="alert('Yay! You are awesome!')">Yes!</button>
+    <button id="no-btn" onmouseover="moveButton()">No</button>
   </div>
-  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT9h0As1JV2WQwloxYxO40OQw5brn5ujimWIa5SbTmFtQ&s=10.jpg">
-  <div style="color: red"
-    <p>I love this pizza note i also like peperoni and</p>
-    <div>
+
+  <script>
+    function moveButton() {
+      const btn = document.getElementById('no-btn');
+      const x = Math.floor(Math.random() * (window.innerWidth - 200));
+      const y = Math.floor(Math.random() * (window.innerHeight - 100));
+      btn.style.left = x + 'px';
+      btn.style.top = y + 'px';
+      btn.style.position = 'fixed';
+    }
+  </script>
+
+</body>
 </html>
