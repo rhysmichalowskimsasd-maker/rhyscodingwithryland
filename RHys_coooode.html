@@ -800,5 +800,1049 @@
     </script>
 </div>
 <!-- END: Cellular Automata Matrix Addon -->
+<!-- START: Genetic Algorithm Sandbox Addon -->
+<div class="addon-ultra" style="max-width: 950px; margin: 30px auto; padding: 25px; background: #070a0e; color: #f0f4f8; font-family: system-ui, sans-serif; border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); border: 1px solid #1e293b;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 15px; margin-bottom: 20px;">
+        <div>
+            <h3 style="margin: 0; color: #38bdf8; font-size: 1.4rem; font-weight: 800;">🧬 Neural-DNA Autonomous Evolution Sandbox</h3>
+            <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">Algorithmic natural selection, mutation rates, and target optimization vectors</p>
+        </div>
+        <div style="font-size: 0.85rem; background: #1e293b; padding: 6px 14px; border-radius: 8px; font-weight: 600; color: #94a3b8; border: 1px solid #334155;">
+            Gen: <span id="gen-count" style="color: #38bdf8;">1</span> | Best Fitness: <span id="best-fit" style="color: #34d399;">0%</span>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 240px 1fr; gap: 20px;">
+        <!-- Control Grid Panel -->
+        <div style="background: #0f172a; padding: 15px; border-radius: 10px; display: flex; flex-direction: column; gap: 15px; font-size: 0.85rem; border: 1px solid #1e293b;">
+            <div>
+                <label style="display: block; margin-bottom: 6px; color: #94a3b8; font-weight: 600;">Mutation Rate (<span id="mut-val">5</span>%)</label>
+                <input type="range" id="param-mutation" min="1" max="50" value="5" style="width: 100%; cursor: pointer;" oninput="document.getElementById('mut-val').innerText=this.value">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 6px; color: #94a3b8; font-weight: 600;">Obstacle Layout Configuration</label>
+                <select id="param-obstacle" onchange="resetEvolutionSystem()" style="width: 100%; background: #1e293b; color: #fff; border: 1px solid #334155; padding: 8px; border-radius: 6px; cursor: pointer;">
+                    <option value="center">Central Barrier Wall</option>
+                    <option value="split">Double Split Gate</option>
+                </select>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #131d31; margin: 5px 0;">
+            <button onclick="resetEvolutionSystem()" style="width: 100%; padding: 10px; background: #ef4444; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">🧹 Wipe & Restart</button>
+        </div>
+
+        <!-- Render Simulation Arena -->
+        <div style="background: #020617; border-radius: 10px; overflow: hidden; border: 1px solid #1e293b; position: relative;">
+            <canvas id="evolutionCanvas" width="620" height="400" style="display: block; max-width: 100%;"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const evCanvas = document.getElementById('evolutionCanvas');
+        const evCtx = evCanvas.getContext('2d');
+
+        const totalPopulationSize = 60;
+        const totalLifetimeSteps = 200;
+        let currentStepCounter = 0;
+        let currentGenerationNumber = 1;
+
+        const simulationTargetZone = { x: 570, y: 200, radius: 15 };
+        let activeObstacleWall = { x: 300, y: 100, width: 25, height: 200 };
+        let organismPopulationArray = [];
+
+        function generateRandomDNAString() {
+            let genes = [];
+            for (let i = 0; i < totalLifetimeSteps; i++) {
+                let angle = Math.random() * Math.PI * 2;
+                genes.push({ x: Math.cos(angle) * 4, y: Math.sin(angle) * 4 });
+            }
+            return genes;
+        }
+
+        function initPopulationPool() {
+            organismPopulationArray = [];
+            for (let i = 0; i < totalPopulationSize; i++) {
+                organismPopulationArray.push({
+                    x: 40, y: 200,
+                    dna: generateRandomDNAString(),
+                    isDead: false,
+                    hasReachedTarget: false,
+                    calculatedFitness: 0
+                });
+            }
+        }
+
+        function calculateFitnessScores() {
+            let maxFit = 0;
+            organismPopulationArray.forEach(org => {
+                let dx = simulationTargetZone.x - org.x;
+                let dy = simulationTargetZone.y - org.y;
+                let distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                
+                org.calculatedFitness = 1 / distance;
+                if (org.hasReachedTarget) org.calculatedFitness *= 10;
+                if (org.calculatedFitness > maxFit) maxFit = org.calculatedFitness;
+            });
+            document.getElementById('best-fit').innerText = Math.min(100, Math.floor(maxFit * 5000)) + '%';
+        }
+
+        function compileNextGenerationPool() {
+            calculateFitnessScores();
+            let matingPool = [];
+            
+            organismPopulationArray.forEach(org => {
+                let tickets = Math.floor(org.calculatedFitness * 1000) || 1;
+                for (let t = 0; t < Math.min(tickets, 50); t++) matingPool.push(org);
+            });
+
+            let nextGeneration = [];
+            const mutationChance = document.getElementById('param-mutation').value / 100;
+
+            for (let i = 0; i < totalPopulationSize; i++) {
+                let parentA = matingPool[Math.floor(Math.random() * matingPool.length)].dna;
+                let parentB = matingPool[Math.floor(Math.random() * matingPool.length)].dna;
+                let childDNA = [];
+
+                for (let g = 0; g < totalLifetimeSteps; g++) {
+                    if (Math.random() < mutationChance) {
+                        let angle = Math.random() * Math.PI * 2;
+                        childDNA.push({ x: Math.cos(angle) * 4, y: Math.sin(angle) * 4 });
+                    } else {
+                        childDNA.push(Math.random() > 0.5 ? parentA[g] : parentB[g]);
+                    }
+                }
+
+                nextGeneration.push({ x: 40, y: 200, dna: childDNA, isDead: false, hasReachedTarget: false, calculatedFitness: 0 });
+            }
+
+            organismPopulationArray = nextGeneration;
+            currentGenerationNumber++;
+            currentStepCounter = 0;
+            document.getElementById('gen-count').innerText = currentGenerationNumber;
+        }
+
+        function updateObstacleGeometry() {
+            const layout = document.getElementById('param-obstacle').value;
+            if (layout === 'center') {
+                activeObstacleWall = { x: 300, y: 100, width: 25, height: 200 };
+            } else {
+                activeObstacleWall = { x: 300, y: 0, width: 25, height: 140 }; // Renders split-gate conditions down script boundaries
+            }
+        }
+
+        function resetEvolutionSystem() {
+            currentGenerationNumber = 1;
+            currentStepCounter = 0;
+            document.getElementById('gen-count').innerText = "1";
+            document.getElementById('best-fit').innerText = "0%";
+            updateObstacleGeometry();
+            initPopulationPool();
+        }
+
+        function runEvolutionEngineLoop() {
+            evCtx.fillStyle = '#020617';
+            evCtx.fillRect(0, 0, evCanvas.width, evCanvas.height);
+
+            // Draw Target Zone Matrix Goal
+            evCtx.beginPath();
+            evCtx.arc(simulationTargetZone.x, simulationTargetZone.y, simulationTargetZone.radius, 0, Math.PI * 2);
+            evCtx.fillStyle = '#10b981';
+            evCtx.fill();
+
+            // Draw Computational Obstacle Barrier Systems
+            evCtx.fillStyle = '#334155';
+            evCtx.fillRect(activeObstacleWall.x, activeObstacleWall.y, activeObstacleWall.width, activeObstacleWall.height);
+            if(document.getElementById('param-obstacle').value === 'split') {
+                evCtx.fillRect(300, 260, 25, 140);
+            }
+
+            // Move and render organisms
+            organismPopulationArray.forEach(org => {
+                if (!org.isDead && !org.hasReachedTarget) {
+                    let moveForce = org.dna[currentStepCounter];
+                    org.x += moveForce.x;
+                    org.y += moveForce.y;
+
+                    // Obstacle Collision Check boundaries
+                    if (org.x >= activeObstacleWall.x && org.x <= activeObstacleWall.x + activeObstacleWall.width &&
+                        org.y >= activeObstacleWall.y && org.y <= activeObstacleWall.y + activeObstacleWall.height) {
+                        org.isDead = true;
+                    }
+                    if (document.getElementById('param-obstacle').value === 'split') {
+                        if (org.x >= 300 && org.x <= 325 && org.y >= 260 && org.y <= 400) org.isDead = true;
+                    }
+
+                    // Border bounds impact checks
+                    if (org.x < 0 || org.x > evCanvas.width || org.y < 0 || org.y > evCanvas.height) org.isDead = true;
+
+                    // Target zone verification checks
+                    let tdx = org.x - simulationTargetZone.x;
+                    let tdy = org.y - simulationTargetZone.y;
+                    if (Math.sqrt(tdx * tdx + tdy * tdy) < simulationTargetZone.radius) org.hasReachedTarget = true;
+                }
+
+                evCtx.fillStyle = org.hasReachedTarget ? '#34d399' : (org.isDead ? '#ef4444' : '#38bdf8');
+                evCtx.fillRect(org.x, org.y, 4, 4);
+            });
+
+            currentStepCounter++;
+            if (currentStepCounter >= totalLifetimeSteps) {
+                compileNextGenerationPool();
+            }
+
+            requestAnimationFrame(runEvolutionEngineLoop);
+        }
+
+        initPopulationPool();
+        runEvolutionEngineLoop();
+    </script>
+</div>
+<!-- END: Genetic Algorithm Sandbox Addon -->
+<!-- START: Asymmetric Crypto-Workspace Addon -->
+<div class="addon-ultra" style="max-width: 950px; margin: 30px auto; padding: 25px; background: #090d16; color: #cbd5e1; font-family: 'Courier New', Courier, monospace; border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); border: 2px dashed #3b82f6;">
+    <div style="border-bottom: 1px solid #1e3a8a; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h3 style="margin: 0; color: #3b82f6; font-weight: bold; text-transform: uppercase;">🔐 Encrypted Data Payload Pipeline</h3>
+            <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #4b5563;">Isolated string hashing, character shift masking, and cipher computations</p>
+        </div>
+        <span style="font-size: 0.75rem; background: #1e3a8a; color: #60a5fa; padding: 4px 10px; border-radius: 4px; font-weight: bold;">ALGO MODULE ACTIVE</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Left Side: Encryption Engine Matrix Input -->
+        <div style="background: #111827; padding: 15px; border-radius: 10px; border: 1px solid #1e293b;">
+            <h4 style="margin: 0 0 12px 0; color: #60a5fa; font-size: 0.9rem;">🔒 CIPHER INJECTION FRAME</h4>
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; font-size:0.75rem; color:#94a3b8; margin-bottom:5px;">Plaintext Secret String</label>
+                <textarea id="crypto-plain" style="width:100%; height:70px; background:#030712; color:#34d399; border:1px solid #334155; border-radius:6px; padding:8px; box-sizing:border-box; font-family:inherit; resize:none;">Top-secret core access keys alpha-99</textarea>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-size:0.75rem; color:#94a3b8; margin-bottom:5px;">Algorithmic Mask Shift Key (Salt Value)</label>
+                <input type="number" id="crypto-salt" value="7" style="width:100%; background:#030712; color:#fff; border:1px solid #334155; border-radius:6px; padding:8px; box-sizing:border-box; font-family:inherit;">
+            </div>
+            <button onclick="executeSecureCipherShift()" style="width:100%; padding:10px; background:#3b82f6; color:white; border:none; font-weight:bold; border-radius:6px; cursor:pointer;">RUN ENCRYPTION PIPELINE</button>
+        </div>
+
+        <!-- Right Side: Decryption Engine Frame Output -->
+        <div style="background: #111827; padding: 15px; border-radius: 10px; border: 1px solid #1e293b;">
+            <h4 style="margin: 0 0 12px 0; color: #f43f5e; font-size: 0.9rem;">🔓 PARSING MATRIX OUTPUT</h4>
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; font-size:0.75rem; color:#94a3b8; margin-bottom:5px;">Compiled Encrypted Hex Base Stream</label>
+                <div id="crypto-cipher-out" style="width:100%; height:70px; background:#030712; color:#f43f5e; border:1px solid #334155; border-radius:6px; padding:8px; box-sizing:border-box; font-size:0.8rem; overflow-y:auto; word-break:break-all;">[No Cipher Array Generated]</div>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; font-size:0.75rem; color:#94a3b8; margin-bottom:5px;">Resolved Verification Digest Hash</label>
+                <div id="crypto-hash-out" style="width:100%; background:#030712; color:#a855f7; border:1px solid #334155; border-radius:6px; padding:8px; box-sizing:border-box; font-size:0.75rem; word-break:break-all;">SHA-256 Mock Buffer Stack Empty</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function executeSecureCipherShift() {
+            const rawPlaintext = document.getElementById('crypto-plain').value;
+            const keySaltValue = parseInt(document.getElementById('crypto-salt').value) || 1;
+            
+            // Step 1: Encrypt character shift mapping calculations
+            let compileHexResult = "";
+            for (let i = 0; i < rawPlaintext.length; i++) {
+                let charCode = rawPlaintext.charCodeAt(i);
+                let maskedValue = (charCode + keySaltValue) % 65535; // Prevents overflow errors
+                compileHexResult += maskedValue.toString(16).padStart(4, '0');
+            }
+            document.getElementById('crypto-cipher-out').innerText = "0x" + compileHexResult.toUpperCase();
+
+            // Step 2: Compute deterministic verification data hashes (Mock cryptographic engine validation)
+            let hashSeedBuffer = 5381;
+            for (let j = 0; j < rawPlaintext.length; j++) {
+                hashSeedBuffer = ((hashSeedBuffer << 5) + hashSeedBuffer) + rawPlaintext.charCodeAt(j);
+            }
+            const compiledShaMock = "DGT-" + Math.abs(hashSeedBuffer).toString(16).toUpperCase().padEnd(16, 'F');
+            document.getElementById('crypto-hash-out').innerText = compiledShaMock;
+        }
+    </script>
+</div>
+<!-- END: Asymmetric Crypto-Workspace Addon -->
+<!-- START: Fluid Thermal Diffusion Addon -->
+<div class="addon-ultra" style="max-width: 950px; margin: 30px auto; padding: 25px; background: #160e0a; color: #f9fafb; font-family: system-ui, sans-serif; border-radius: 16px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); border: 2px solid #ea580c;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #431407; padding-bottom: 15px; margin-bottom: 20px;">
+        <div>
+            <h3 style="margin: 0; color: #f97316; font-size: 1.4rem; font-weight: 800;">🌡️ Thermodynamic Dissipation Matrix</h3>
+            <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #9a3412;">Real-time fluid heat convection vector loop modeling</p>
+        </div>
+        <button onclick="clearThermalDiffusionMatrix()" style="padding: 8px 16px; background: #7c2d12; color: #ffedd5; border: 1px solid #9a3412; border-radius: 6px; font-weight: 600; cursor: pointer;">🧹 Quench Grid</button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+        <div style="border: 2px solid #431407; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <canvas id="thermalCanvas" width="600" height="300" style="display: block; max-width: 100%; cursor: pointer;"></canvas>
+        </div>
+        <p style="font-size: 0.75rem; color: #9a3412; font-weight: 600; text-align: center; margin: 0;">Click anywhere inside the thermal core lattice canvas grid to inject a high-temperature heat source.</p>
+    </div>
+
+    <script>
+        const thermCanvas = document.getElementById('thermalCanvas');
+        const tCtx = thermCanvas.getContext('2d');
+
+        const thermalGridBlockSize = 12;
+        const thermalCols = Math.floor(thermCanvas.width / thermalGridBlockSize);
+        const thermalRows = Math.floor(thermCanvas.height / thermalGridBlockSize);
+
+        let thermalTemperatureMatrix = Array(thermalCols).fill(null).map(() => Array(thermalRows).fill(0.0));
+        const heatDissipationFactor = 0.985; // Simulates constant energy cooling loss metrics
+
+        function renderThermalLatticeFrame() {
+            tCtx.clearRect(0, 0, thermCanvas.width, thermCanvas.height);
+
+            for (let x = 0; x < thermalCols; x++) {
+                for (let y = 0; y < thermalRows; y++) {
+                    let temp = thermalTemperatureMatrix[x][y];
+                    
+                    // Maps heat levels to colors: high heat glows yellow/orange, cold decays to gray/black
+                    let redChannel = Math.floor(Math.min(255, temp * 3.5));
+                    let greenChannel = Math.floor(Math.min(255, temp * 1.2));
+                    let blueChannel = Math.floor(Math.min(255, temp * 0.1));
+
+                    tCtx.fillStyle = `rgb(${redChannel}, ${greenChannel}, ${blueChannel})`;
+                    tCtx.fillRect(x * thermalGridBlockSize, y * thermalGridBlockSize, thermalGridBlockSize - 1, thermalGridBlockSize - 1);
+                }
+            }
+        }
+
+        function calculateThermodynamicConvection() {
+            let nextThermalMatrix = thermalTemperatureMatrix.map(arr => [...arr]);
+
+            for (let x = 1; x < thermalCols - 1; x++) {
+                for (let y = 1; y < thermalRows - 1; y++) {
+                    // Calculates average heat across surrounding neighbor cells
+                    let surroundingSum = 
+                        thermalTemperatureMatrix[x + 1][y] +
+                        thermalTemperatureMatrix[x - 1][y] +
+                        thermalTemperatureMatrix[x][y + 1] +
+                        thermalTemperatureMatrix[x][y - 1];
+
+                    let averageThermalEnergy = surroundingSum / 4;
+                    // Standard equilibrium diffusion formulas combined with loss coefficients
+                    nextThermalMatrix[x][y] = (thermalTemperatureMatrix[x][y] * 0.1 + averageThermalEnergy * 0.9) * heatDissipationFactor;
+                }
+            }
+
+            thermalTemperatureMatrix = nextThermalMatrix;
+            renderThermalLatticeFrame();
+        }
+
+        function clearThermalDiffusionMatrix() {
+            thermalTemperatureMatrix = Array(thermalCols).fill(null).map(() => Array(thermalRows).fill(0.0));
+            renderThermalLatticeFrame();
+        }
+
+        thermCanvas.addEventListener('mousemove', function(e) {
+            // Check if mouse button is held down while crossing vectors
+            if (e.buttons !== 1) return; 
+            const rect = thermCanvas.getBoundingClientRect();
+            const gridX = Math.floor(((e.clientX - rect.left) * (thermCanvas.width / rect.width)) / thermalGridBlockSize);
+            const gridY = Math.floor(((e.clientY - rect.top) * (thermCanvas.height / rect.height)) / thermalGridBlockSize);
+
+            if (gridX > 0 && gridX < thermalCols - 1 && gridY > 0 && gridY < thermalRows - 1) {
+                thermalTemperatureMatrix[gridX][gridY] = 255.0; // Injects peak thermal energy forces
+                // Spill thermal values over to adjacent coordinates to smoothen brush input spikes
+                thermalTemperatureMatrix[gridX+1][gridY] = 180.0;
+                thermalTemperatureMatrix[gridX-1][gridY] = 180.0;
+                thermalTemperatureMatrix[gridX][gridY+1] = 180.0;
+                thermalTemperatureMatrix[gridX][gridY-1] = 180.0;
+            }
+        });
+
+        thermCanvas.addEventListener('mousedown', function(e) {
+            const rect = thermCanvas.getBoundingClientRect();
+            const gridX = Math.floor(((e.clientX - rect.left) * (thermCanvas.width / rect.width)) / thermalGridBlockSize);
+            const gridY = Math.floor(((e.clientY - rect.top) * (thermCanvas.height / rect.height)) / thermalGridBlockSize);
+
+            if (gridX >= 0 && gridX < thermalCols && gridY >= 0 && gridY < thermalRows) {
+                thermalTemperatureMatrix[gridX][gridY] = 255.0;
+            }
+        });
+
+        // Set engine calculation tick intervals
+        setInterval(calculateThermodynamicConvection, 30);
+    </script>
+</div>
+<!-- END: Fluid Thermal Diffusion Addon -->
+<!-- START: Space Shooter Game Addon -->
+<div class="addon-game" style="max-width: 950px; margin: 30px auto; padding: 25px; background: #04020a; color: #fff; font-family: 'Courier New', Courier, monospace; border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); border: 2px solid #a855f7;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3b0764; padding-bottom: 15px; margin-bottom: 20px;">
+        <div>
+            <h3 style="margin: 0; color: #c084fc; font-size: 1.4rem; font-weight: bold; letter-spacing: 1px;">🚀 NEBULA VANGUARD: ARCADE</h3>
+            <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #701a75;">Controls: Left/Right Arrows or A/D to move | Spacebar to Fire lasers</p>
+        </div>
+        <div style="font-size: 1.1rem; background: #2e1065; padding: 8px 16px; border-radius: 6px; font-weight: bold; color: #e9d5ff; border: 1px solid #581c87;">
+            SCORE: <span id="shooter-score" style="color: #f472b6;">0</span>
+        </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
+        <!-- Game Canvas Context -->
+        <canvas id="shooterCanvas" width="700" height="450" style="background: #020005; border: 2px solid #581c87; border-radius: 8px; max-width: 100%; display: block;"></canvas>
+        <button id="btn-restart-shooter" onclick="initShooterGame()" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 15px 30px; background: #a855f7; color: white; border: none; font-size: 1.2rem; font-weight: bold; border-radius: 6px; cursor: pointer; font-family: inherit; box-shadow: 0 0 20px #a855f7;">PLAY AGAIN</button>
+    </div>
+
+    <script>
+        const sCanvas = document.getElementById('shooterCanvas');
+        const sCtx = sCanvas.getContext('2d');
+
+        let shooterPlayer, shooterLasers, shooterEnemies, shooterExplosions, shooterScore, shooterOver, shooterKeys;
+
+        function initShooterGame() {
+            shooterPlayer = { x: 325, y: 390, width: 40, height: 35, speed: 6, hp: 3 };
+            shooterLasers = []; shooterEnemies = []; shooterExplosions = [];
+            shooterScore = 0; shooterOver = false;
+            shooterKeys = {};
+            document.getElementById('shooter-score').innerText = "0";
+            document.getElementById('btn-restart-shooter').style.display = "none";
+        }
+
+        window.addEventListener('keydown', e => { if(["Space","ArrowLeft","ArrowRight","KeyA","KeyD"].includes(e.code)) e.preventDefault(); shooterKeys[e.code] = true; });
+        window.addEventListener('keyup', e => shooterKeys[e.code] = false);
+
+        function spawnEnemyShip() {
+            if (Math.random() < 0.03 && shooterEnemies.length < 8) {
+                shooterEnemies.push({
+                    x: Math.random() * (sCanvas.width - 30),
+                    y: -30,
+                    width: 30,
+                    height: 25,
+                    speed: Math.random() * 2 + 1.5
+                });
+            }
+        }
+
+        function runShooterEngineFrame() {
+            sCtx.fillStyle = 'rgba(2, 0, 5, 0.3)'; // Semi-clear fill builds arcade space trails
+            sCtx.fillRect(0, 0, sCanvas.width, sCanvas.height);
+
+            if (!shooterOver) {
+                // Execute core movement controllers
+                if (shooterKeys['ArrowLeft'] || shooterKeys['KeyA']) shooterPlayer.x = Math.max(0, shooterPlayer.x - shooterPlayer.speed);
+                if (shooterKeys['ArrowRight'] || shooterKeys['KeyD']) shooterPlayer.x = Math.min(sCanvas.width - shooterPlayer.width, shooterPlayer.x + shooterPlayer.speed);
+                
+                // Laser throttling fire mechanism 
+                if (shooterKeys['Space'] && (shooterLasers.length === 0 || shooterLasers[shooterLasers.length - 1].y < shooterPlayer.y - 12)) {
+                    shooterLasers.push({ x: shooterPlayer.x + shooterPlayer.width / 2 - 2, y: shooterPlayer.y, width: 4, height: 12, speed: 8 });
+                    shooterKeys['Space'] = false; // Requires dynamic release taps
+                }
+
+                spawnEnemyShip();
+
+                // Compute moving active lasers
+                shooterLasers.forEach((l, lIdx) => {
+                    l.y -= l.speed;
+                    if (l.y < 0) shooterLasers.splice(lIdx, 1);
+                    sCtx.fillStyle = '#f43f5e';
+                    sCtx.fillRect(l.x, l.y, l.width, l.height);
+                });
+
+                // Compute procedural falling enemies matrix
+                shooterEnemies.forEach((e, eIdx) => {
+                    e.y += e.speed;
+                    if (e.y > sCanvas.height) { shooterEnemies.splice(eIdx, 1); shooterPlayer.hp--; }
+
+                    // Check laser-to-enemy physical bounds impact vectors
+                    shooterLasers.forEach((l, lIdx) => {
+                        if (l.x < e.x + e.width && l.x + l.width > e.x && l.y < e.y + e.height && l.y + l.height > e.y) {
+                            for(let i=0; i<8; i++) shooterExplosions.push({x: e.x+e.width/2, y: e.y+e.height/2, vx:(Math.random()-0.5)*4, vy:(Math.random()-0.5)*4, life:20});
+                            shooterEnemies.splice(eIdx, 1);
+                            shooterLasers.splice(lIdx, 1);
+                            shooterScore += 100;
+                            document.getElementById('shooter-score').innerText = shooterScore;
+                        }
+                    });
+
+                    // Check player ship directly impacting an enemy obstacle bound
+                    if (shooterPlayer.x < e.x + e.width && shooterPlayer.x + shooterPlayer.width > e.x && shooterPlayer.y < e.y + e.height && shooterPlayer.y + shooterPlayer.height > e.y) {
+                        shooterEnemies.splice(eIdx, 1);
+                        shooterPlayer.hp--;
+                    }
+
+                    sCtx.fillStyle = '#a855f7';
+                    sCtx.fillRect(e.x, e.y, e.width, e.height);
+                });
+
+                // Compute explosion visual debris particles
+                shooterExplosions.forEach((ex, exIdx) => {
+                    ex.x += ex.vx; ex.y += ex.vy; ex.life--;
+                    if(ex.life <= 0) shooterExplosions.splice(exIdx, 1);
+                    sCtx.fillStyle = `rgba(244, 63, 94, ${ex.life / 20})`;
+                    sCtx.fillRect(ex.x, ex.y, 3, 3);
+                });
+
+                if (shooterPlayer.hp <= 0) shooterOver = true;
+
+                // Render Player Shape Vector
+                sCtx.fillStyle = '#22d3ee';
+                sCtx.fillRect(shooterPlayer.x, shooterPlayer.y, shooterPlayer.width, shooterPlayer.height);
+                
+                // Render Simple Interface Health Indicators
+                for(let h=0; h<shooterPlayer.hp; h++) {
+                    sCtx.fillStyle = '#22d3ee';
+                    sCtx.fillRect(15 + (h * 18), 15, 12, 12);
+                }
+            } else {
+                sCtx.fillStyle = '#ef4444';
+                sCtx.font = "24px 'Courier New'";
+                sCtx.textAlign = "center";
+                sCtx.fillText("CRITICAL OVERRIDE: GAME OVER", sCanvas.width/2, sCanvas.height/2 - 10);
+                document.getElementById('btn-restart-shooter').style.display = "block";
+            }
+
+            requestAnimationFrame(runShooterEngineFrame);
+        }
+
+        initShooterGame();
+        runShooterEngineFrame();
+    </script>
+</div>
+<!-- END: Space Shooter Game Addon -->
+<!-- START: Cyber Racer Game Addon -->
+<div class="addon-game" style="max-width: 950px; margin: 30px auto; padding: 25px; background: #020617; color: #fff; font-family: system-ui, sans-serif; border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); border: 2px solid #06b6d4;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 15px; margin-bottom: 20px;">
+        <div>
+            <h3 style="margin: 0; color: #22d3ee; font-weight: 800; text-transform: uppercase;">🎚️ CYBER-GRID AUTOMATA RACER</h3>
+            <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">Controls: Use Left/Right Arrow keys or A/D to change active lane grids</p>
+        </div>
+        <div style="font-size: 1.1rem; background: #0f172a; padding: 6px 14px; border-radius: 8px; font-weight: bold; color: #22d3ee; border: 1px solid #1e293b;">
+            DATA DISTANCE: <span id="racer-score">0</span>m
+        </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
+        <canvas id="racerCanvas" width="700" height="400" style="background: #020208; border-radius: 8px; border: 1px solid #1e293b; max-width: 100%; display: block;"></canvas>
+        <button id="btn-restart-racer" onclick="initRacerGame()" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 12px 28px; background: #06b6d4; color: #020617; border: none; font-size: 1.1rem; font-weight: bold; border-radius: 6px; cursor: pointer; box-shadow: 0 0 15px #06b6d4;">REBOOT CORE</button>
+    </div>
+
+    <script>
+        const rCanvas = document.getElementById('racerCanvas');
+        const rCtx = rCanvas.getContext('2d');
+
+        let racerTargetLane, racerCurrentX, racerObstacles, racerScore, racerVelocity, racerOver;
+        const lanePositionsArray =; // 3 discrete grid lane vectors mapping x axis bounds
+
+        function initRacerGame() {
+            racerTargetLane = 1; // Center initialization default
+            racerCurrentX = lanePositionsArray[1];
+            racerObstacles = []; racerScore = 0; racerVelocity = 5; racerOver = false;
+            document.getElementById('racer-score').innerText = "0";
+            document.getElementById('btn-restart-racer').style.display = "none";
+        }
+
+        window.addEventListener('keydown', e => {
+            if (!racerOver) {
+                if ((e.key === 'ArrowLeft' || e.key === 'a') && racerTargetLane > 0) { racerTargetLane--; e.preventDefault(); }
+                if ((e.key === 'ArrowRight' || e.key === 'd') && racerTargetLane < 2) { racerTargetLane++; e.preventDefault(); }
+            }
+        });
+
+        function spawnRacerWall() {
+            if (Math.random() < 0.02 && racerObstacles.length < 4) {
+                racerObstacles.push({
+                    lane: Math.floor(Math.random() * 3),
+                    y: 0,
+                    size: 10
+                });
+            }
+        }
+
+        function runRacerEngineLoop() {
+            rCtx.fillStyle = '#020208'; rCtx.fillRect(0, 0, rCanvas.width, rCanvas.height);
+
+            // Renders 3D perspective grid lines merging onto a central horizon vanishing point 
+            rCtx.strokeStyle = '#1e293b'; rCtx.lineWidth = 2;
+            rCtx.beginPath();
+            rCtx.moveTo(350, 0); rCtx.lineTo(50, rCanvas.height);
+            rCtx.moveTo(350, 0); rCtx.lineTo(250, rCanvas.height);
+            rCtx.moveTo(350, 0); rCtx.lineTo(450, rCanvas.height);
+            rCtx.moveTo(350, 0); rCtx.lineTo(650, rCanvas.height);
+            rCtx.stroke();
+
+            if (!racerOver) {
+                racerScore += 1; racerVelocity += 0.002;
+                document.getElementById('racer-score').innerText = Math.floor(racerScore / 5);
+
+                spawnRacerWall();
+
+                // Smooth linear interpolation transitions across player lane tracks
+                const targetXCoord = lanePositionsArray[racerTargetLane];
+                racerCurrentX += (targetXCoord - racerCurrentX) * 0.25;
+
+                // Loop and calculate obstacle physics processing blocks
+                racerObstacles.forEach((obs, oIdx) => {
+                    obs.y += racerVelocity;
+                    obs.size += 0.9; // Scale sizes smoothly to mimic a 3D depth field
+
+                    // Calculate active rendering projection footprints mapping 3D space to a 2D screen coordinate system
+                    let projectionFactor = obs.y / rCanvas.height;
+                    let centerX = 350 + (lanePositionsArray[obs.lane] - 350) * projectionFactor;
+
+                    if (obs.y > rCanvas.height) racerObstacles.splice(oIdx, 1);
+
+                    // Verify intersection hitboxes matching bounding areas
+                    if (obs.y > 310 && obs.y < 360 && obs.lane === racerTargetLane) {
+                        racerOver = true;
+                    }
+
+                    rCtx.fillStyle = '#f43f5e';
+                    rCtx.shadowColor = '#f43f5e'; rCtx.shadowBlur = 10;
+                    rCtx.fillRect(centerX - obs.size / 2, obs.y, obs.size, obs.size / 1.5);
+                    rCtx.shadowBlur = 0;
+                });
+
+                // Render active character block footprint frames
+                rCtx.fillStyle = '#06b6d4';
+                rCtx.shadowColor = '#06b6d4'; rCtx.shadowBlur = 15;
+                rCtx.fillRect(racerCurrentX - 20, 330, 40, 25);
+                rCtx.shadowBlur = 0;
+            } else {
+                rCtx.fillStyle = '#ef4444'; rCtx.font = "bold 22px system-ui";
+                rCtx.textAlign = "center"; rCtx.fillText("GRID PARITY LOSS: DISCONNECTED", rCanvas.width / 2, rCanvas.height / 2);
+                document.getElementById('btn-restart-racer').style.display = "block";
+            }
+
+            requestAnimationFrame(runRacerEngineLoop);
+        }
+
+        initRacerGame();
+        runRacerEngineLoop();
+    </script>
+</div>
+<!-- END: Cyber Racer Game Addon -->
+<!-- START: Brick Breaker Game Addon -->
+<div class="addon-game" style="max-width: 950px; margin: 30px auto; padding: 25px; background: #0c0a09; color: #fff; font-family: monospace; border-radius: 16px; box-shadow: 0 25px 40px rgba(0,0,0,0.6); border: 2px solid #eab308;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #292524; padding-bottom: 15px; margin-bottom: 20px;">
+        <div>
+            <h3 style="margin: 0; color: #eab308; font-weight: bold; text-transform: uppercase;">🧱 AUTOMATED MATRIX BRICK BREAKER</h3>
+            <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #78716c;">Controls: Move mouse horizontally across the block canvas frame to steer player paddle</p>
+        </div>
+        <div style="font-size: 1.1rem; background: #1c1917; padding: 6px 14px; border-radius: 6px; font-weight: bold; color: #eab308; border: 1px solid #292524;">
+            BRICKS HIT: <span id="brick-score">0</span>
+        </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
+        <canvas id="brickCanvas" width="700" height="380" style="background: #020202; border-radius: 8px; border: 1px solid #292524; max-width: 100%; display: block;"></canvas>
+        <button id="btn-restart-brick" onclick="initBrickGame()" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 12px 24px; background: #eab308; color: #0c0a09; border: none; font-size: 1.1rem; font-weight: bold; border-radius: 6px; cursor: pointer; box-shadow: 0 0 15px #eab308;">REPOPULATE MATRIX</button>
+    </div>
+
+    <script>
+        const bCanvas = document.getElementById('brickCanvas');
+        const bCtx = bCanvas.getContext('2d');
+
+        let brickPaddle, brickBall, brickBlocksArray, brokenBricksCount, brickGameOver;
+        const targetGridCols = 9, targetGridRows = 4, targetBrickWidth = 68, targetBrickHeight = 20;
+
+        function initBrickGame() {
+            brickPaddle = { x: 300, width: 90, height: 12 };
+            brickBall = { x: 350, y: 250, vx: 3, vy: -4, radius: 6 };
+            brickBlocksArray = []; brokenBricksCount = 0; brickGameOver = false;
+            document.getElementById('brick-score').innerText = "0";
+            document.getElementById('btn-restart-brick').style.display = "none";
+
+            // Generate structural coordinate arrays programmatically mapping canvas layout rows
+            for (let c = 0; c < targetGridCols; c++) {
+                for (let r = 0; r < targetGridRows; r++) {
+                    brickBlocksArray.push({
+                        x: 35 + c * (targetBrickWidth + 6),
+                        y: 40 + r * (targetBrickHeight + 6),
+                        status: 1 // Flag tracking unbroken versus broken state states
+                    });
+                }
+            }
+        }
+
+        bCanvas.addEventListener('mousemove', e => {
+            const rect = bCanvas.getBoundingClientRect();
+            brickPaddle.x = (e.clientX - rect.left) * (bCanvas.width / rect.width) - brickPaddle.width / 2;
+        });
+
+        function runBrickEngineLoop() {
+            bCtx.clearRect(0, 0, bCanvas.width, bCanvas.height);
+
+            if (!brickGameOver) {
+                // Apply positional trajectory adjustments step shifts
+                brickBall.x += brickBall.vx; brickBall.y += brickBall.vy;
+
+                // Handle basic solid wall perimeter bounce reflections
+                if (brickBall.x - brickBall.radius < 0 || brickBall.x + brickBall.radius > bCanvas.width) brickBall.vx = -brickBall.vx;
+                if (brickBall.y - brickBall.radius < 0) brickBall.vy = -brickBall.vy;
+
+                // Check falling out beneath screen boundary limit planes
+                if (brickBall.y > bCanvas.height) brickGameOver = true;
+
+                // Check impacting active player steering paddle dimensions
+                if (brickBall.y + brickBall.radius > bCanvas.height - 30 && 
+                    brickBall.x > brickPaddle.x && brickBall.x < brickPaddle.x + brickPaddle.width) {
+                    brickBall.vy = -Math.abs(brickBall.vy); // Force upward deflection angle shift loops
+                }
+
+                // Parse block coordinate arrays resolving matrix block grid impacts
+                let activeBricksLeft = false;
+                brickBlocksArray.forEach(b => {
+                    if (b.status === 1) {
+                        activeBricksLeft = true;
+                        if (brickBall.x > b.x && brickBall.x < b.x + targetBrickWidth && 
+                            brickBall.y > b.y && brickBall.y < b.y + targetBrickHeight) {
+                            brickBall.vy = -brickBall.vy;
+                            b.status = 0;
+                            brokenBricksCount++;
+                            document.getElementById('brick-score').innerText = brokenBricksCount;
+                        }
+                        bCtx.fillStyle = '#eab308';
+                        bCtx.fillRect(b.x, b.y, targetBrickWidth, targetBrickHeight);
+                    }
+                });
+
+                if(!activeBricksLeft) brickGameOver = true; // Auto end loop on clear matrix conditions
+
+                // Render moving ball shapes
+                bCtx.beginPath(); bCtx.arc(brickBall.x, brickBall.y, brickBall.radius, 0, Math.PI * 2);
+                bCtx.fillStyle = '#ffffff'; bCtx.fill();
+
+                // Render base paddle block coordinates
+                bCtx.fillStyle = '#a8a29e';
+                bCtx.fillRect(brickPaddle.x, bCanvas.height - 30, brickPaddle.width, brickPaddle.height);
+            } else {
+                bCtx.fillStyle = '#ef4444'; bCtx.font = "20px monospace";
+                bCtx.textAlign = "center"; bCtx.fillText("MATRIX BREAK: CALCULATION HALTED", bCanvas.width / 2, bCanvas.height / 2 + 10);
+                document.getElementById('btn-restart-brick').style.display = "block";
+            }
+
+            requestAnimationFrame(runBrickEngineLoop);
+        }
+
+        initBrickGame();
+        runBrickEngineLoop();
+    </script>
+</div>
+<!-- END: Brick Breaker Game Addon -->
+<!-- START: Classic Snake Game Addon -->
+<div class="addon-game" style="max-width: 500px; margin: 20px auto; padding: 20px; background: #111; color: #00ff00; font-family: monospace; border: 3px solid #00ff00; border-radius: 8px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <h3 style="margin-top: 0; text-transform: uppercase; letter-spacing: 2px;">🐍 Arcade Snake</h3>
+    <div style="font-size: 1.2rem; margin-bottom: 10px;">SCORE: <span id="snake-score">0</span></div>
+    
+    <canvas id="snakeCanvas" width="400" height="400" style="background: #000; border: 2px solid #222; display: block; margin: 0 auto; max-width: 100%;"></canvas>
+    
+    <script>
+        const snCanvas = document.getElementById('snakeCanvas');
+        const snCtx = snCanvas.getContext('2d');
+        const gridBlockSize = 20;
+
+        let snake, snakeFood, dx, dy, snakeScore, snakeGameLoop;
+
+        function initSnakeGame() {
+            snake = [{x: 160, y: 200}, {x: 140, y: 200}, {x: 120, y: 200}];
+            dx = gridBlockSize; dy = 0; snakeScore = 0;
+            document.getElementById('snake-score').innerText = "0";
+            generateSnakeFood();
+            clearInterval(snakeGameLoop);
+            snakeGameLoop = setInterval(runSnakeTick, 100); // Changes speed timing ticking loops
+        }
+
+        function generateSnakeFood() {
+            snakeFood = {
+                x: Math.floor(Math.random() * (snCanvas.width / gridBlockSize)) * gridBlockSize,
+                y: Math.floor(Math.random() * (snCanvas.height / gridBlockSize)) * gridBlockSize
+            };
+        }
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowUp' && dy === 0) { dx = 0; dy = -gridBlockSize; e.preventDefault(); }
+            if (e.key === 'ArrowDown' && dy === 0) { dx = 0; dy = gridBlockSize; e.preventDefault(); }
+            if (e.key === 'ArrowLeft' && dx === 0) { dx = -gridBlockSize; dy = 0; e.preventDefault(); }
+            if (e.key === 'ArrowRight' && dx === 0) { dx = gridBlockSize; dy = 0; e.preventDefault(); }
+        });
+
+        function runSnakeTick() {
+            // Calculate structural next step coordinate heads
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            
+            // Verify structural border collisions limits
+            if (head.x < 0 || head.x >= snCanvas.width || head.y < 0 || head.y >= snCanvas.height) return initSnakeGame();
+            
+            // Verify tail biting impact loops
+            for (let i = 0; i < snake.length; i++) {
+                if (snake[i].x === head.x && snake[i].y === head.y) return initSnakeGame();
+            }
+
+            snake.unshift(head);
+
+            // Verify food consumption tracking vectors
+            if (head.x === snakeFood.x && head.y === snakeFood.y) {
+                snakeScore += 10;
+                document.getElementById('snake-score').innerText = snakeScore;
+                generateSnakeFood();
+            } else {
+                snake.pop();
+            }
+
+            // Draw game screen matrix frame
+            snCtx.fillStyle = '#000'; snCtx.fillRect(0, 0, snCanvas.width, snCanvas.height);
+            
+            snCtx.fillStyle = '#ff0000'; snCtx.fillRect(snakeFood.x, snakeFood.y, gridBlockSize, gridBlockSize); // Food
+            
+            snCtx.fillStyle = '#00ff00'; // Snake body rendering lines
+            snake.forEach(part => snCtx.fillRect(part.x, part.y, gridBlockSize - 2, gridBlockSize - 2));
+        }
+
+        initSnakeGame();
+    </script>
+</div>
+<!-- END: Classic Retro Snake Game Addon -->
+<!-- START: Classic Pong Addon -->
+<div class="addon-game" style="max-width: 500px; margin: 20px auto; padding: 20px; background: #1a1a1a; color: #fff; font-family: sans-serif; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
+    <h3 style="margin-top: 0;">🏓 Classic Table Pong</h3>
+    <div style="font-size: 1.2rem; margin-bottom: 10px; font-weight: bold; letter-spacing: 2px;">
+        CPU: <span id="pong-cpu">0</span> | YOU: <span id="pong-player">0</span>
+    </div>
+    
+    <canvas id="pongCanvas" width="450" height="300" style="background: #111; border-radius: 4px; display: block; margin: 0 auto; max-width: 100%; cursor: none;"></canvas>
+
+    <script>
+        const pCanvas = document.getElementById('pongCanvas');
+        const pCtx = pCanvas.getContext('2d');
+
+        let pBall = { x: 225, y: 150, vx: 3, vy: 2, radius: 6 };
+        let cpuPaddleY = 110, playerPaddleY = 110;
+        let cpuScore = 0, playerScore = 0;
+        const padHeight = 60, padWidth = 10, padSpeed = 3;
+
+        pCanvas.addEventListener('mousemove', e => {
+            const rect = pCanvas.getBoundingClientRect();
+            playerPaddleY = (e.clientY - rect.top) * (pCanvas.height / rect.height) - padHeight / 2;
+        });
+
+        function runPongFrame() {
+            // Apply physical step changes matrix shifts
+            pBall.x += pBall.vx; pBall.y += pBall.vy;
+
+            // Handle horizontal floor ceilings bounce limits 
+            if (pBall.y - pBall.radius < 0 || pBall.y + pBall.radius > pCanvas.height) pBall.vy = -pBall.vy;
+
+            // Automation tracker processing AI positioning paths
+            if (cpuPaddleY + padHeight / 2 < pBall.y) cpuPaddleY += padSpeed;
+            else cpuPaddleY -= padSpeed;
+
+            // Score evaluation left boundary zones
+            if (pBall.x < 0) {
+                playerScore++; document.getElementById('pong-player').innerText = playerScore; resetPongBall();
+            }
+            // Score evaluation right boundary zones
+            if (pBall.x > pCanvas.width) {
+                cpuScore++; document.getElementById('pong-cpu').innerText = cpuScore; resetPongBall();
+            }
+
+            // Right side user player paddle bounce intersections checking rules
+            if (pBall.x + pBall.radius > pCanvas.width - 20 && pBall.y > playerPaddleY && pBall.y < playerPaddleY + padHeight) {
+                pBall.vx = -Math.abs(pBall.vx);
+            }
+            // Left side AI paddle bounce intersections checking rules
+            if (pBall.x - pBall.radius < 20 && pBall.y > cpuPaddleY && pBall.y < cpuPaddleY + padHeight) {
+                pBall.vx = Math.abs(pBall.vx);
+            }
+
+            // Draw update components lists
+            pCtx.fillStyle = '#111'; pCtx.fillRect(0, 0, pCanvas.width, pCanvas.height);
+            pCtx.fillStyle = '#fff';
+            pCtx.fillRect(10, cpuPaddleY, padWidth, padHeight); // AI
+            pCtx.fillRect(pCanvas.width - 20, playerPaddleY, padWidth, padHeight); // User player
+            pCtx.fillRect(pBall.x - pBall.radius, pBall.y - pBall.radius, pBall.radius * 2, pBall.radius * 2); // Ball vector block
+            
+            requestAnimationFrame(runPongFrame);
+        }
+
+        function resetPongBall() { pBall.x = 225; pBall.y = 150; pBall.vx = -pBall.vx; }
+        runPongFrame();
+    </script>
+</div>
+<!-- END: Classic Pong Addon -->
+<!-- START: Tiny Flappy Addon -->
+<div class="addon-game" style="max-width: 500px; margin: 20px auto; padding: 20px; background: #0c1a30; color: #fff; font-family: system-ui, sans-serif; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+    <h3 style="margin-top: 0; color: #38bdf8;">🪶 Flappy Square Box</h3>
+    <div style="font-size: 1.1rem; margin-bottom: 10px;">SCORE: <span id="flap-score">0</span></div>
+    
+    <canvas id="flapCanvas" width="400" height="300" style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; display: block; margin: 0 auto; max-width: 100%; cursor: pointer;"></canvas>
+
+    <script>
+        const fCanvas = document.getElementById('flapCanvas');
+        const fCtx = fCanvas.getContext('2d');
+
+        let birdY, birdVelocity, pipesArray, flapScore, flapOver;
+        const gravityWeight = 0.25, jumpStrength = -5;
+
+        function initFlapGame() {
+            birdY = 150; birdVelocity = 0; flapScore = 0; flapOver = false;
+            pipesArray = [{ x: 400, topHeight: 90, bottomY: 190 }];
+            document.getElementById('flap-score').innerText = "0";
+        }
+
+        fCanvas.addEventListener('click', () => { if(!flapOver) birdVelocity = jumpStrength; else initFlapGame(); });
+
+        function runFlapLoop() {
+            fCtx.clearRect(0, 0, fCanvas.width, fCanvas.height);
+
+            if (!flapOver) {
+                birdVelocity += gravityWeight; birdY += birdVelocity;
+
+                // Handle floor ceiling bounds limits impact rules 
+                if (birdY < 0 || birdY > fCanvas.height - 16) flapOver = true;
+
+                // Generate pipeline barriers arrays programmatically
+                if (pipesArray[pipesArray.length - 1].x < 240) {
+                    let topH = Math.floor(Math.random() * 120) + 30;
+                    pipesArray.push({ x: 400, topHeight: topH, bottomY: topH + 100 }); // 100px fixed gate size pass openings
+                }
+
+                pipesArray.forEach((p, index) => {
+                    p.x -= 2; // Speed movement tracking rate
+                    if (p.x < -40) { pipesArray.splice(index, 1); flapScore++; document.getElementById('flap-score').innerText = flapScore; }
+
+                    // Box intercept coordinates hit testing calculation metrics
+                    if (p.x < 76 && p.x > 20 && (birdY < p.topHeight || birdY > p.bottomY - 16)) { flapOver = true; }
+
+                    fCtx.fillStyle = '#10b981';
+                    fCtx.fillRect(p.x, 0, 40, p.topHeight); // Top pipe barrier block bounds
+                    fCtx.fillRect(p.x, p.bottomY, 40, fCanvas.height - p.bottomY); // Bottom pipe barrier block bounds
+                });
+
+                fCtx.fillStyle = '#38bdf8';
+                fCtx.fillRect(40, birdY, 16, 16); // Player block character square
+            } else {
+                fCtx.fillStyle = '#ef4444'; fCtx.font = "bold 18px Arial"; fCtx.textAlign = "center";
+                fCtx.fillText("CRASH! CLICK TO RESTART", fCanvas.width / 2, fCanvas.height / 2);
+            }
+
+            requestAnimationFrame(runFlapLoop);
+        }
+
+        initFlapGame();
+        runFlapLoop();
+    </script>
+</div>
+<!-- END: Tiny Flappy Addon -->
+<!-- ================================================================= -->
+<!-- MODULE 1: ORIGINAL RETRO SNAKE ARCADE GAME ADDON                  -->
+<!-- ================================================================= -->
+<div class="addon-game" style="max-width: 500px; margin: 20px auto; padding: 20px; background: #111; color: #00ff00; font-family: monospace; border: 3px solid #00ff00; border-radius: 8px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <h3 style="margin-top: 0; text-transform: uppercase; letter-spacing: 2px;">🐍 Arcade Snake</h3>
+    <div style="font-size: 1.2rem; margin-bottom: 10px;">SCORE: <span id="snake-score">0</span></div>
+    
+    <canvas id="snakeCanvas" width="400" height="400" style="background: #000; border: 2px solid #222; display: block; margin: 0 auto; max-width: 100%;"></canvas>
+    
+    <script>
+        const snCanvas = document.getElementById('snakeCanvas');
+        const snCtx = snCanvas.getContext('2d');
+        const gridBlockSize = 20;
+
+        let snake, snakeFood, dx, dy, snakeScore, snakeGameLoop;
+
+        function initSnakeGame() {
+            snake = [{x: 160, y: 200}, {x: 140, y: 200}, {x: 120, y: 200}];
+            dx = gridBlockSize; dy = 0; snakeScore = 0;
+            document.getElementById('snake-score').innerText = "0";
+            generateSnakeFood();
+            clearInterval(snakeGameLoop);
+            snakeGameLoop = setInterval(runSnakeTick, 100);
+        }
+
+        function generateSnakeFood() {
+            snakeFood = {
+                x: Math.floor(Math.random() * (snCanvas.width / gridBlockSize)) * gridBlockSize,
+                y: Math.floor(Math.random() * (snCanvas.height / gridBlockSize)) * gridBlockSize
+            };
+        }
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowUp' && dy === 0) { dx = 0; dy = -gridBlockSize; e.preventDefault(); }
+            if (e.key === 'ArrowDown' && dy === 0) { dx = 0; dy = gridBlockSize; e.preventDefault(); }
+            if (e.key === 'ArrowLeft' && dx === 0) { dx = -gridBlockSize; dy = 0; e.preventDefault(); }
+            if (e.key === 'ArrowRight' && dx === 0) { dx = gridBlockSize; dy = 0; e.preventDefault(); }
+        });
+
+        function runSnakeTick() {
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            if (head.x < 0 || head.x >= snCanvas.width || head.y < 0 || head.y >= snCanvas.height) return initSnakeGame();
+            
+            for (let i = 0; i < snake.length; i++) {
+                if (snake[i].x === head.x && snake[i].y === head.y) return initSnakeGame();
+            }
+
+            snake.unshift(head);
+
+            if (head.x === snakeFood.x && head.y === snakeFood.y) {
+                snakeScore += 10;
+                document.getElementById('snake-score').innerText = snakeScore;
+                generateSnakeFood();
+            } else {
+                snake.pop();
+            }
+
+            snCtx.fillStyle = '#000'; snCtx.fillRect(0, 0, snCanvas.width, snCanvas.height);
+            snCtx.fillStyle = '#ff0000'; snCtx.fillRect(snakeFood.x, snakeFood.y, gridBlockSize, gridBlockSize);
+            snCtx.fillStyle = '#00ff00';
+            snake.forEach(part => snCtx.fillRect(part.x, part.y, gridBlockSize - 2, gridBlockSize - 2));
+        }
+
+        initSnakeGame();
+    </script>
+</div>
+
+<!-- ================================================================= -->
+<!-- MODULE 2: MASTER FACTORY CONTROLLER PANEL                         -->
+<!-- ================================================================= -->
+<div style="max-width: 500px; margin: 30px auto; padding: 20px; background: #0f172a; border-radius: 12px; border: 2px dashed #635bff; text-align: center; font-family: system-ui, sans-serif;">
+    <h4 style="margin: 0 0 10px 0; color: #9333ea; uppercase; font-size: 0.9rem; letter-spacing: 1px;">⚙️ INFINITE ADDON GENERATOR FACTORY</h4>
+    <p style="margin: 0 0 15px 0; font-size: 0.8rem; color: #64748b;">Spawns highly interactable structural layout nodes below real-time pipelines</p>
+    
+    <button onclick="spawnNextRandomAddonModule()" style="padding: 12px 24px; background: #635bff; color: white; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; transition: transform 0.1s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+        ⚡ GENERATE NEXT RANDOM MODULE
+    </button>
+</div>
+
+<!-- TARGET ZONE PIPELINE FOR DYNAMIC CODE INJECTION -->
+<div id="infinite-addon-pipeline-target"></div>
+
+<script>
+    let modulesGeneratedCounterCount = 0;
+
+    function spawnNextRandomAddonModule() {
+        modulesGeneratedCounterCount++;
+        const pipelineTargetElement = document.getElementById('infinite-addon-pipeline-target');
+        
+        // Dynamic structural configurations matching code injection blocks
+        const templatesArray = [
+            // Sub-Template A: Interactive Counter Ledger Clicker Node
+            `<div style="max-width: 500px; margin: 20px auto; padding: 15px; background: #222; color: #fff; border-radius: 8px; border: 2px solid #ef4444; font-family: monospace;">
+                <h5 style="margin: 0 0 10px 0; color: #ef4444;">🚨 SPARK CLICKER NODE #${modulesGeneratedCounterCount}</h5>
+                <div id="cnt-${modulesGeneratedCounterCount}" style="font-size: 1.8rem; font-weight: bold; margin-bottom: 10px;">0</div>
+                <button onclick="document.getElementById('cnt-${modulesGeneratedCounterCount}').innerText = parseInt(document.getElementById('cnt-${modulesGeneratedCounterCount}').innerText) + 1" style="background:#ef4444; color:white; border:none; padding:6px 12px; font-family:inherit; cursor:pointer; font-weight:bold; border-radius:4px;">PULSE CLICKS</button>
+            </div>`,
+
+            // Sub-Template B: Mathematical Password Entropy Shifting Node
+            `<div style="max-width: 500px; margin: 20px auto; padding: 15px; background: #1e293b; color: #f8fafc; border-radius: 8px; border: 2px solid #38bdf8; font-family: system-ui, sans-serif;">
+                <h5 style="margin: 0 0 10px 0; color: #38bdf8;">🔑 DATA PASS GENERATOR NODE #${modulesGeneratedCounterCount}</h5>
+                <div style="background:#0f172a; padding:8px; border-radius:4px; font-family:monospace; margin-bottom:10px; font-size:0.95rem;" id="pass-${modulesGeneratedCounterCount}">GEN-PASS-XXXX</div>
+                <button onclick="document.getElementById('pass-${modulesGeneratedCounterCount}').innerText = 'KEY-' + Math.floor(Math.random() * 900000 + 100000) + '-TOK'" style="background:#38bdf8; color:#0f172a; border:none; padding:6px 12px; font-weight:bold; cursor:pointer; border-radius:4px;">REGENERATE KEY</button>
+            </div>`,
+
+            // Sub-Template C: Aesthetic Dynamic Color Core Shifter Node
+            `<div id="colbox-${modulesGeneratedCounterCount}" style="max-width: 500px; margin: 20px auto; padding: 20px; background: #111; color: #fff; border-radius: 8px; border: 2px solid #10b981; font-family: system-ui, sans-serif; text-align:center; transition: background 0.3s;">
+                <h5 style="margin: 0 0 10px 0; color: #10b981;">🎨 CHROMATIC COLOR SHIFTER NODE #${modulesGeneratedCounterCount}</h5>
+                <button onclick="const randomHex = '#' + Math.floor(Math.random()*16777215).toString(16); document.getElementById('colbox-${modulesGeneratedCounterCount}').style.backgroundColor = randomHex;" style="background:#10b981; color:black; border:none; padding:8px 16px; font-weight:bold; cursor:pointer; border-radius:4px;">WARP CORE COLOR</button>
+            </div>`
+        ];
+
+        // Random selection roll parameters targeting available modules index lengths
+        const randomDiceIndexRoll = Math.floor(Math.random() * templatesArray.length);
+        const compiledHtmlNodeString = templatesArray[randomDiceIndexRoll];
+
+        // Inject elements sequentially using adjacent element parsing strategies
+        pipelineTargetElement.insertAdjacentHTML('beforeend', compiledHtmlNodeString);
+    }
+</script>
 
 </html>
