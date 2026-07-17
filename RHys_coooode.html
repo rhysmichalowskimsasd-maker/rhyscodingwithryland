@@ -11,19 +11,46 @@
   <div style="color: red"
     <p>I love this pizza note i also like peperoni and</p>
     <div>
-      <!-- START: Alternative Local-Safe Video Addon Module -->
-<div class="video-addon-wrapper" style="max-width: 560px; margin: 20px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 8px; overflow: hidden; background-color: #000;">
-    <!-- Works locally without any network or connection refusal blocks -->
-    <video 
-        width="100%" 
-        height="315" 
-        controls 
-        poster="https://unsplash.com"
-        style="display: block; object-fit: cover;">
-        <source src="https://www.youtube.com/watch?v=FJ5qLWP3Fqo" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
+      <!-- START: Dopamine Clicker Addon -->
+<div class="addon-card" style="max-width: 350px; margin: 20px auto; padding: 20px; text-align: center; font-family: 'Courier New', Courier, monospace; background: #222; color: #00ff00; border: 3px double #00ff00; border-radius: 4px; box-shadow: 5px 5px 0px #005500;">
+    <h3 style="margin-top: 0; font-size: 1.2rem; text-transform: uppercase;">Retro Clicker v1.0</h3>
+    <div style="font-size: 2.5rem; margin: 15px 0; font-weight: bold;" id="click-score">0</div>
+    <button onclick="document.getElementById('click-score').innerText = parseInt(document.getElementById('click-score').innerText) + 1" 
+            style="padding: 10px 20px; font-family: inherit; font-size: 1rem; background: #00ff00; color: #222; border: none; cursor: pointer; font-weight: bold; box-shadow: 3px 3px 0px #fff; outline: none;"
+            onmousedown="this.style.transform='translate(2px, 2px)';" 
+            onmouseup="this.style.transform='none';">
+        CLICK ME
+    </button>
 </div>
-<!-- END: Alternative Local-Safe Video Addon Module -->
+<!-- END: Dopamine Clicker Addon -->
+<!-- START: Magic 8-Ball Addon -->
+<div class="addon-card" style="max-width: 350px; margin: 20px auto; padding: 25px; text-align: center; font-family: system-ui, sans-serif; background: #1a1a2e; color: #fff; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">
+    <h3 style="margin: 0 0 15px 0; color: #e94560;">The Digital 8-Ball</h3>
+    
+    <!-- The Ball Graphic -->
+    <div onclick="const answers=['Yes!', 'No way.', 'Maybe?', 'Ask again later', 'Error 404', 'Outlook good', 'Absolutely not']; document.getElementById('ball-text').innerText = answers[Math.floor(Math.random()*answers.length)];" 
+         style="width: 140px; height: 140px; background: #0f3460; border-radius: 50%; margin: 0 auto 15px auto; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 4px solid #e94560; transition: transform 0.1s;"
+         onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+        <div style="width: 70px; height: 70px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 5px;">
+            <span id="ball-text" style="color: #1a1a2e; font-size: 0.75rem; font-weight: bold; line-height: 1.1;">CLICK ME</span>
+        </div>
+    </div>
+    <p style="font-size: 0.8rem; color: #848ccf; margin: 0;">Think of a question and shake the ball</p>
+</div>
+<!-- END: Magic 8-Ball Addon -->
+<!-- START: Cyberpunk Glow Addon -->
+<div class="addon-card" style="max-width: 350px; margin: 20px auto; padding: 20px; text-align: center; background: #000; border-radius: 12px; border: 1px solid #333;">
+    <style>
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 10px #ff0055, inset 0 0 10px #ff0055; color: #ff0055; }
+            50% { box-shadow: 0 0 25px #00f0ff, inset 0 0 15px #00f0ff; color: #00f0ff; }
+            100% { box-shadow: 0 0 10px #ff0055, inset 0 0 10px #ff0055; color: #ff0055; }
+        }
+    </style>
+    <div style="padding: 30px; border-radius: 8px; border: 2px solid currentColor; font-family: monospace; font-size: 1.1rem; font-weight: bold; letter-spacing: 2px; animation: pulseGlow 4s infinite ease-in-out;">
+        SYSTEM ACTIVE
+    </div>
+</div>
+<!-- END: Cyberpunk Glow Addon -->
 
 </html>
