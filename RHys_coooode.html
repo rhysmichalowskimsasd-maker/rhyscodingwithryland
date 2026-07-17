@@ -2019,4 +2019,67 @@
                 fpPipes.forEach((p, index) => {
                     p.x -= 2.5;
 Use code with caution.if (p.x < -40) { fpPipes.splice(index, 1); fpScore++; document.getElementById('fp-score').innerText = fpScore; }if (p.x < 76 && p.x > 20 && (fpBirdY < p.top || fpBirdY > p.bottom - 16)) { fpOver = true; }fpCtx.fillStyle = '#ff00ff';fpCtx.fillRect(p.x, 0, 40, p.top);fpCtx.fillRect(p.x, p.bottom, 40, fpCanvas.height - p.bottom);});fpCtx.fillStyle = '#00ffff';fpCtx.fillRect(40, fpBirdY, 16, 16);} else {fpCtx.fillStyle = '#ff0000'; fpCtx.font = "16px monospace"; fpCtx.textAlign = "center";fpCtx.fillText("SYSTEM CRASH! CLICK TO REBOOT", fpCanvas.width / 2, fpCanvas.height / 2);}requestAnimationFrame(runFpLoop);}initFpGame();runFpLoop();let globalActiveModuleCount = 3;function deployInfiniteArcadeModule() {globalActiveModuleCount++;const targetPipeline = document.getElementById('dynamic-arcade-pipeline-target');// Storage matrix library containing full modular gameplay snippetsconst miniGamesFactoryLibrary = [// Game Alpha: Click-Burst Speed Trainer<div class="arcade-cabinet-box" style="max-width: 500px; margin: 30px auto; padding: 20px; background: #050505; color: #eab308; font-family: monospace; border: 4px solid #eab308; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.6);"> <h3 style="margin-top: 0; color: #eab308;">⏱️ MODULE 0${globalActiveModuleCount}: CLICK-BURST RATE</h3> <div style="font-size: 1.1rem; margin-bottom: 15px;">TOTAL CLICKS: <span id="cb-score-${globalActiveModuleCount}" style="font-weight:bold; font-size:1.4rem;">0</span></div> <div id="cb-timer-box-${globalActiveModuleCount}" style="background:#1c1917; padding:15px; border-radius:8px; border:1px solid #444; margin-bottom:15px;"> <button onclick="triggerBurstClick(${globalActiveModuleCount})" id="cb-btn-${globalActiveModuleCount}" style="padding:12px 24px; font-family:inherit; font-weight:bold; background:#eab308; color:#000; border:none; border-radius:6px; cursor:pointer; width:100%;">TAP TO STIMULATE SYSTEM</button> </div> </div>,// Game Beta: Binary Higher / Lower Matrix Guessing Block<div class="arcade-cabinet-box" style="max-width: 500px; margin: 30px auto; padding: 20px; background: #050505; color: #3b82f6; font-family: monospace; border: 4px solid #3b82f6; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.6);"> <h3 style="margin-top: 0; color: #3b82f6;">🎲 MODULE 0${globalActiveModuleCount}: ENCRYPTION GUESS</h3> <div style="font-size:1.1rem; margin-bottom:10px;">STREAK: <span id="hl-streak-${globalActiveModuleCount}">0</span></div> <div style="background:#0f172a; padding:15px; border-radius:8px; font-size:1.6rem; font-weight:bold; color:#fff; margin-bottom:15px; border:1px solid #1e3a8a;"> CURRENT VAL: <span id="hl-val-${globalActiveModuleCount}">50</span> </div> <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"> <button onclick="resolveGuessHL(${globalActiveModuleCount}, 'high')" style="background:#3b82f6; color:white; border:none; padding:10px; font-family:inherit; font-weight:bold; cursor:pointer; border-radius:4px;">HIGHER</button> <button onclick="resolveGuessHL(${globalActiveModuleCount}, 'low')" style="background:#1e3a8a; color:white; border:none; padding:10px; font-family:inherit; font-weight:bold; cursor:pointer; border-radius:4px;">LOWER</button> </div> </div>,// Game Gamma: Color Match Reflex Panel Trigger<div class="arcade-cabinet-box" style="max-width: 500px; margin: 30px auto; padding: 20px; background: #050505; color: #10b981; font-family: monospace; border: 4px solid #10b981; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.6);"> <h3 style="margin-top: 0; color: #10b981;">🎨 MODULE 0${globalActiveModuleCount}: COLOR REFLEX MATCH</h3> <div style="font-size:1.1rem; margin-bottom:12px;">SCORE: <span id="cm-score-${globalActiveModuleCount}">0</span></div> <div id="cm-target-${globalActiveModuleCount}" style="padding:15px; border-radius:6px; background:#ef4444; color:white; font-weight:bold; letter-spacing:1px; margin-bottom:15px; text-transform:uppercase;">RED</div> <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"> <button onclick="verifyColorReflex(${globalActiveModuleCount}, '#ef4444')" style="background:#ef4444; width:100%; height:40px; border:none; cursor:pointer; border-radius:4px;"></button> <button onclick="verifyColorReflex(${globalActiveModuleCount}, '#3b82f6')" style="background:#3b82f6; width:100%; height:40px; border:none; cursor:pointer; border-radius:4px;"></button> </div> </div>];// Random engine parser selectorconst randomDiceRollIndex = Math.floor(Math.random() * miniGamesFactoryLibrary.length);const compiledAddonOutputString = miniGamesFactoryLibrary[randomDiceRollIndex];// Structural parsing appending blocks into current document layout timelinestargetPipeline.insertAdjacentHTML('beforeend', compiledAddonOutputString);// State initializer blocks handling individual micro-game hooks after appending nodesif (randomDiceRollIndex === 1) {setTimeout(() => {const valEl = document.getElementById(hl-val-${globalActiveModuleCount});if (valEl) valEl.innerText = Math.floor(Math.random() * 90) + 5;}, 50);}}// Interactive Handler Functions for Dynamic Modulesfunction triggerBurstClick(id) {const scoreEl = document.getElementById(cb-score-${id});scoreEl.innerText = parseInt(scoreEl.innerText) + 1;}function resolveGuessHL(id, choice) {const valEl = document.getElementById(hl-val-${id});const streakEl = document.getElementById(hl-streak-${id});let currentNum = parseInt(valEl.innerText);let nextNum = Math.floor(Math.random() * 90) + 5;while(nextNum === currentNum) { nextNum = Math.floor(Math.random() * 90) + 5; }let success = false;if (choice === 'high' && nextNum > currentNum) success = true;if (choice === 'low' && nextNum < currentNum) success = true;if (success) {streakEl.innerText = parseInt(streakEl.innerText) + 1;streakEl.style.color = "#10b981";} else {streakEl.innerText = "0";streakEl.style.color = "#ef4444";}valEl.innerText = nextNum;}function verifyColorReflex(id, hexChoice) {const targetBox = document.getElementById(cm-target-${id});const scoreBox = document.getElementById(cm-score-${id});const style = window.getComputedStyle(targetBox);const currentBgColor = style.backgroundColor; // Resolves to rgb() matrix valueslet isMatch = false;if (hexChoice === '#ef4444' && currentBgColor.includes('239')) isMatch = true; // Match Red channel array indicesif (hexChoice === '#3b82f6' && currentBgColor.includes('59')) isMatch = true;  // Match Blue channel array indicesif (isMatch) {scoreBox.innerText = parseInt(scoreBox.innerText) + 1;// Shift target visual conditions dynamicallyif(Math.random() > 0.5) {targetBox.style.backgroundColor = '#ef4444'; targetBox.innerText = "RED";} else {targetBox.style.backgroundColor = '#3b82f6'; targetBox.innerText = "BLUE";}} else {scoreBox.innerText = "0";}
+<div style="max-width: 600px; margin: 20px auto; text-align: center; font-family: sans-serif; background: #111; color: #fff; padding: 15px; border-radius: 8px;">
+    <div style="margin-bottom: 10px; font-weight: bold;">💰 $<span id="m-cash">200</span> | 🌊 Wave: <span id="m-wave">1</span></div>
+    <canvas id="tdCanvas" width="500" height="300" style="background: #000; cursor: crosshair; display: block; margin: 0 auto; max-width: 100%;"></canvas>
+    <button onclick="nextWave()" id="w-btn" style="margin-top: 10px; padding: 8px 16px; background: #00ff00; border: none; font-weight: bold; cursor: pointer; border-radius: 4px;">🚀 NEXT WAVE</button>
+
+    <script>
+        const canvas = document.getElementById('tdCanvas'), ctx = canvas.getContext('2d');
+        const path = [{x:0, y:150}, {x:200, y:150}, {x:200, y:50}, {x:350, y:50}, {x:350, y:250}, {x:500, y:250}];
+        let cash = 200, wave = 1, towers = [], creeps = [], projectiles = [], running = false;
+
+        canvas.addEventListener('click', e => {
+            const r = canvas.getBoundingClientRect(), x = (e.clientX - r.left) * (500 / r.width), y = (e.clientY - r.top) * (300 / r.height);
+            if (cash >= 100) { cash -= 100; towers.push({x, y, cd: 0}); document.getElementById('m-cash').innerText = cash; }
+        });
+
+        function nextWave() {
+            if (running) return; running = true;
+            document.getElementById('w-btn').style.background = '#444';
+            let spawned = 0, num = 5 + wave * 2;
+            let spawner = setInterval(() => {
+                creeps.push({x: path[0].x, y: path[0].y, pIdx: 0, hp: 20 + wave * 15, max: 20 + wave * 15});
+                if (++spawned >= num) clearInterval(spawner);
+            }, 600);
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, 500, 300);
+            ctx.strokeStyle = '#222'; ctx.lineWidth = 30; ctx.beginPath(); ctx.moveTo(path[0].x, path[0].y);
+            path.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
+
+            towers.forEach(t => {
+                if (t.cd > 0) t.cd--;
+                let target = creeps.find(c => Math.hypot(c.x - t.x, c.y - t.y) < 100);
+                if (target && t.cd === 0) { t.cd = 30; projectiles.push({x: t.x, y: t.y, target}); }
+                ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(t.x, t.y, 10, 0, Math.PI*2); ctx.fill();
+            });
+
+            creeps.forEach((c, idx) => {
+                let tgt = path[c.pIdx + 1];
+                let dist = Math.hypot(tgt.x - c.x, tgt.y - c.y);
+                if (dist < 2) { if (++c.pIdx >= path.length - 1) creeps.splice(idx, 1); } 
+                else { c.x += ((tgt.x - c.x) / dist) * 1.5; c.y += ((tgt.y - c.y) / dist) * 1.5; }
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(c.x - 6, c.y - 6, 12, 12);
+                ctx.fillStyle = '#22c55e'; ctx.fillRect(c.x - 6, c.y - 10, 12 * (c.hp / c.max), 2);
+            });
+
+            projectiles.forEach((p, idx) => {
+                if (!creeps.includes(p.target)) { projectiles.splice(idx, 1); return; }
+                let dist = Math.hypot(p.target.x - p.x, p.target.y - p.y);
+                if (dist < 5) {
+                    p.target.hp -= 10; projectiles.splice(idx, 1);
+                    if (p.target.hp <= 0) { cash += 25; creeps.splice(creeps.indexOf(p.target), 1); document.getElementById('m-cash').innerText = cash; }
+                } else { p.x += ((p.target.x - p.x) / dist) * 5; p.y += ((p.target.y - p.y) / dist) * 5; }
+                ctx.fillStyle = '#eab308'; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+            });
+
+            if (running && creeps.length === 0) { running = false; wave++; document.getElementById('m-wave').innerText = wave; document.getElementById('w-btn').style.background = '#00ff00'; }
+            requestAnimationFrame(loop);
+        }
+        loop();
+    </script>
+</div>
+
 </html>
