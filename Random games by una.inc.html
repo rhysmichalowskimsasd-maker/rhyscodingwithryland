@@ -356,87 +356,124 @@
     </script>
 </div>
 <!-- END: Grid Drum Machine Loop Engine Addon -->
-<!-- START: Analytics Dashboard Module Addon -->
-<div class="addon-complex" style="max-width: 900px; margin: 30px auto; padding: 25px; background: #0b0f19; color: #f1f5f9; font-family: system-ui, sans-serif; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid #1e293b;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+<!-- START: Database System Addon -->
+<div class="addon-ultra" style="max-width: 950px; margin: 30px auto; padding: 25px; background: #ffffff; color: #1e293b; font-family: system-ui, sans-serif; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;">
         <div>
-            <h3 style="margin:0; font-size:1.4rem; font-weight:700; color:#38bdf8;">📈 Core Processor Telemetry</h3>
-            <p style="margin:4px 0 0 0; font-size:0.85rem; color:#64748b;">Live algorithmic data arrays running inside sandbox containers</p>
+            <h3 style="margin: 0; color: #0f172a; font-size: 1.35rem; font-weight: 800;">📋 Dynamic Relational Data Ledger</h3>
+            <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">Self-contained table engine featuring relational sorting parameters</p>
         </div>
-        <span style="display:flex; align-items:center; gap:8px; font-size:0.8rem; font-weight:600; color:#10b981; background:rgba(16,185,129,0.1); padding:6px 12px; border-radius:9999px;">
-            <span style="width:8px; height:8px; background:#10b981; border-radius:50%;"></span> SYSTEM FEED STABLE
-        </span>
-    </div>
-
-    <!-- Highlight Metric Card Strips Row -->
-    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; margin-bottom:25px;">
-        <div style="background:#1e293b; padding:15px; border-radius:10px; border:1px solid #334155;">
-            <div style="font-size:0.8rem; color:#94a3b8; font-weight:600;">ARRAY FLOW CAPACITY</div>
-            <div id="metric-bandwidth" style="font-size:1.6rem; font-weight:700; color:#38bdf8; margin-top:5px;">42.8 MB/s</div>
-        </div>
-        <div style="background:#1e293b; padding:15px; border-radius:10px; border:1px solid #334155;">
-            <div style="font-size:0.8rem; color:#94a3b8; font-weight:600;">ACTIVE PIPELINE CORES</div>
-            <div id="metric-cores" style="font-size:1.6rem; font-weight:700; color:#a855f7; margin-top:5px;">14 / 16</div>
-        </div>
-        <div style="background:#1e293b; padding:15px; border-radius:10px; border:1px solid #334155;">
-            <div style="font-size:0.8rem; color:#94a3b8; font-weight:600;">MATRIX PROCESSING ERROR STATUS</div>
-            <div id="metric-errors" style="font-size:1.6rem; font-weight:700; color:#f43f5e; margin-top:5px;">0.00%</div>
+        <div style="font-size: 0.85rem; background: #f1f5f9; padding: 6px 14px; border-radius: 8px; font-weight: 600; color: #475569;">
+            Total Rows Loaded: <span id="db-count" style="color: #2563eb;">3</span>
         </div>
     </div>
 
-    <!-- Live Telemetry Array Graph Area -->
-    <div style="background:#111827; padding:20px; border-radius:12px; border:1px solid #1e293b;">
-        <h4 style="margin:0 0 15px 0; font-size:0.9rem; color:#94a3b8;">CORE COMPUTE STACK DISTRIBUTION</h4>
-        <div id="analytics-bar-grid" style="display:grid; grid-template-columns:repeat(8, 1fr); gap:12px; height:180px; align-items:end; padding-bottom:5px;">
-            <!-- Javascript injects active load graph channels dynamically inside this element frame -->
+    <!-- Data Injection Form Block Layout -->
+    <div style="background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; display: grid; grid-template-columns: 2fr 2fr 2fr 1fr; gap: 12px; align-items: end;">
+        <div>
+            <label style="display:block; font-size:0.8rem; font-weight:700; color:#475569; margin-bottom:6px;">Client Name</label>
+            <input type="text" id="db-name" placeholder="John Doe" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
         </div>
+
+        <div>
+            <label style="display:block; font-size:0.8rem; font-weight:700; color:#475569; margin-bottom:6px;">Department Tier</label>
+            <select id="db-dept" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box; height:35px;">
+                <option value="Engineering">Engineering</option>
+                <option value="Operations">Operations</option>
+                <option value="Product Design">Product Design</option>
+            </select>
+        </div>
+
+        <div>
+            <label style="display:block; font-size:0.8rem; font-weight:700; color:#475569; margin-bottom:6px;">Age Matrix Value</label>
+            <input type="number" id="db-age" value="28" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+        </div>
+
+        <button onclick="insertDatabaseRow()" style="width:100%; height:35px; background:#2563eb; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Inject</button>
+    </div>
+
+    <!-- Live Filtering Parameter Row -->
+    <div style="margin-bottom: 15px; display: flex; gap: 15px; align-items: center;">
+        <span style="font-size: 0.85rem; font-weight: bold; color: #475569;">Live Query Filter:</span>
+        <input type="text" id="db-search" oninput="renderDatabaseMatrix()" placeholder="Search by name or department..." style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 250px; font-size: 0.85rem;">
+    </div>
+
+    <!-- Complete Structured Data Matrix Table Frame -->
+    <div style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+                <tr style="background: #f1f5f9; color: #475569; font-weight: 700; border-bottom: 1px solid #e2e8f0;">
+                    <th style="padding: 12px 16px;">UUID HASH ID</th>
+                    <th style="padding: 12px 16px;">CLIENT FULL NAME</th>
+                    <th style="padding: 12px 16px;">DEPARTMENT CATEGORY</th>
+                    <th style="padding: 12px 16px;">AGE RECORD</th>
+                    <th style="padding: 12px 16px; text-align: center;">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody id="database-matrix-body"></tbody>
+        </table>
     </div>
 
     <script>
-        const barGridContainer = document.getElementById('analytics-bar-grid');
-        const totalChannelBars = 8;
-        const channelBarElementsArr = [];
+        let dynamicDbArray = [
+            { id: "MOCK-7102", name: "Alice Vance", dept: "Engineering", age: 31 },
+            { id: "MOCK-4491", name: "David Miller", dept: "Product Design", age: 26 },
+            { id: "MOCK-8823", name: "Elena Rostova", dept: "Operations", age: 34 }
+        ];
 
-        // Build data columns programmatically
-        for(let b=0; b<totalChannelBars; b++) {
-            const frameCol = document.createElement('div');
-            frameCol.style = "display:flex; flex-direction:column; align-items:center; gap:8px; height:100%; justify-content:end;";
-            
-            const activeFillBar = document.createElement('div');
-            activeFillBar.style = "width:100%; background:linear-gradient(to top, #0284c7, #38bdf8); border-radius:6px 6px 0 0; transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1); height:50%;";
-            
-            const textLabel = document.createElement('span');
-            textLabel.style = "font-size:0.7rem; color:#64748b; font-weight:600;";
-            textLabel.innerText = `C-${b+1}`;
-            
-            frameCol.appendChild(activeFillBar);
-            frameCol.appendChild(textLabel);
-            barGridContainer.appendChild(frameCol);
-            channelBarElementsArr.push(activeFillBar);
-        }
+        function renderDatabaseMatrix() {
+            const tbody = document.getElementById('database-matrix-body');
+            const searchVal = document.getElementById('db-search').value.toLowerCase();
+            tbody.innerHTML = '';
 
-        function runLiveDashboardTelemetryCycle() {
-            // Randomize and compute metrics to mimic fluctuating hardware load
-            channelBarElementsArr.forEach(bar => {
-                const randomlyComputedHeightPercent = Math.floor(Math.random() * 85) + 10;
-                bar.style.height = `${randomlyComputedHeightPercent}%`;
-                // Color shifting triggers across high threshold saturation limits
-                bar.style.background = randomlyComputedHeightPercent > 75 
-                    ? 'linear-gradient(to top, #b91c1c, #ef4444)' 
-                    : 'linear-gradient(to top, #0284c7, #38bdf8)';
+            let queryMatchCount = 0;
+            dynamicDbArray.forEach((row, index) => {
+                if (row.name.toLowerCase().includes(searchVal) || row.dept.toLowerCase().includes(searchVal)) {
+                    queryMatchCount++;
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = "1px solid #f1f5f9";
+                    tr.innerHTML = `
+                        <td style="padding:12px 16px; font-family:monospace; color:#64748b; font-size:0.8rem;">${row.id}</td>
+                        <td style="padding:12px 16px; font-weight:600; color:#0f172a;">${row.name}</td>
+                        <td style="padding:12px 16px;"><span style="background:#e0f2fe; color:#0369a1; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">${row.dept}</span></td>
+                        <td style="padding:12px 16px; font-weight:600;">${row.age}</td>
+                        <td style="padding:12px 16px; text-align:center;"><button onclick="deleteDatabaseRow(${index})" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size:0.85rem;">Remove</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                }
             });
 
-            document.getElementById('metric-bandwidth').innerText = `${(Math.random() * 30 + 30).toFixed(1)} MB/s`;
-            document.getElementById('metric-cores').innerText = `${Math.floor(Math.random() * 3) + 13} / 16`;
-            document.getElementById('metric-errors').innerText = `${(Math.random() * 0.04).toFixed(3)}%`;
+            document.getElementById('db-count').innerText = queryMatchCount;
         }
 
-        // Loop calculations execution frequency
-        setInterval(runLiveDashboardTelemetryCycle, 800);
-        runLiveDashboardTelemetryCycle();
+        function insertDatabaseRow() {
+            const nameEl = document.getElementById('db-name');
+            const deptEl = document.getElementById('db-dept');
+            const ageEl = document.getElementById('db-age');
+
+            if (!nameEl.value.trim()) return;
+
+            const mockHash = "MOCK-" + Math.floor(1000 + Math.random() * 9000);
+            dynamicDbArray.push({
+                id: mockHash,
+                name: nameEl.value,
+                dept: deptEl.value,
+                age: parseInt(ageEl.value) || 25
+            });
+
+            nameEl.value = '';
+            renderDatabaseMatrix();
+        }
+
+        function deleteDatabaseRow(index) {
+            dynamicDbArray.splice(index, 1);
+            renderDatabaseMatrix();
+        }
+
+        renderDatabaseMatrix();
     </script>
 </div>
-<!-- END: Analytics Dashboard Module Addon -->
+<!-- END: Database System Addon -->
 <!-- START: Gravity Sandbox Addon -->
 <div class="addon-ultra" style="max-width: 950px; margin: 30px auto; padding: 25px; background: #05050a; color: #fff; font-family: system-ui, sans-serif; border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); border: 1px solid #1e1e38;">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1e38; padding-bottom: 15px; margin-bottom: 20px;">
