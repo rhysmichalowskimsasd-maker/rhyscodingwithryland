@@ -293,6 +293,85 @@
         }
     }
 });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flawless 2D Minecraft Bed Wars</title>
+    <style>
+        body { margin: 0; background: #111; color: #fff; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; user-select: none; overflow: hidden; }
+        #game-container { position: relative; margin-top: 15px; }
+        canvas { display: block; background: #70b5ff; border: 4px solid #444; border-radius: 4px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        canvas:fullscreen { width: 100vw; height: 100vh; border: none; background: #70b5ff; }
+        #ui { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; pointer-events: none; }
+        .card { background: rgba(20, 20, 20, 0.9); padding: 12px; border-radius: 6px; font-size: 14px; border: 2px solid #555; line-height: 1.4; width: 220px; pointer-events: auto; }
+        .p1-c { border-left: 6px solid #ff3333; } 
+        .p2-c { border-right: 6px solid #3333ff; text-align: right; border-top: 3px dashed #00e5ff; }
+        .shop-list { margin-top: 5px; font-size: 11px; color: #bbb; text-align: left; }
+        .p2-c .shop-list { text-align: right; }
+        .highlight { color: #ffd700; font-weight: bold; }
+        #scoreboard { position: absolute; top: 180px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 15, 0.9); border: 2px solid #555; padding: 10px; border-radius: 6px; width: 200px; font-size: 13px; text-align: center; }
+        .sb-title { color: #ffd700; font-weight: bold; margin-bottom: 6px; }
+        .sb-row { display: flex; justify-content: space-between; margin: 4px 0; font-weight: bold; }
+        #victory { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; font-size: 40px; font-weight: bold; border-radius: 4px; z-index: 10; }
+        #restart { background: #28a745; color: #fff; border: none; padding: 10px 20px; font-size: 18px; cursor: pointer; border-radius: 5px; margin-top: 20px; font-family: inherit; font-weight: bold; }
+        #footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #222; border-top: 3px solid #444; padding: 10px; display: flex; justify-content: space-around; font-size: 13px; font-weight: bold; z-index: 20; }
+        .key-badge { background: #444; padding: 2px 6px; border-radius: 4px; border: 1px solid #666; }
+        .fs-container { margin-top: 10px; display: flex; justify-content: center; }
+        .fs-btn { background: #e67e22; color: #fff; border: 2px solid #d35400; padding: 6px 12px; font-size: 13px; font-family: inherit; font-weight: bold; cursor: pointer; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="960" height="460"></canvas>
+        <div id="ui">
+            <!-- RED HUD -->
+            <div class="card p1-c">
+                <b style="color:#ff3333;">RED (P1)</b><br>
+                HP: <span id="p1-hp">100</span>% | Bed: <span id="p1-bed">OK</span><br>
+                Blocks: <span id="p1-bl">20</span> | Iron: <span id="p1-ir">0</span><br>
+                Sword: <span id="p1-sw">Wood</span> | Armor: <span id="p1-ar">None</span>
+                <div class="shop-list">
+                    <b>SHOP HOTKEYS:</b><br>
+                    Press <span class="highlight">[1]</span> Stone Sword (4 Iron)<br>
+                    Press <span class="highlight">[2]</span> Chainmail (6 Iron)
+                </div>
+            </div>
+            <!-- BLUE HUD (OP) -->
+            <div class="card p2-c">
+                <b style="color:#3333ff;">BLUE (P2) <span style="color:#00e5ff;">[OP]</span></b><br>
+                HP: <span id="p2-hp">100</span>% | Bed: <span id="p2-bed">OK</span><br>
+                Blocks: <span id="p2-bl">20</span> | Iron: <span id="p2-ir">0</span><br>
+                Sword: <span id="p2-sw">Wood</span> | Armor: <span id="p2-ar">None</span>
+                <div class="shop-list">
+                    <b>SHOP HOTKEYS:</b><br>
+                    Press <span class="highlight">[B]</span> Stone Sword (4 Iron)<br>
+                    Press <span class="highlight">[N]</span> Chainmail (6 Iron)
+                </div>
+            </div>
+        </div>
+
+        <div id="scoreboard">
+            <div class="sb-title">== MATCH STATS ==</div>
+            <div class="sb-row" style="color:#ff3333;"><span>RED Kills:</span> <span id="sb-p1-k">0</span></div>
+            <div class="sb-row" style="color:#ff3333;"><span>RED Beds Brk:</span> <span id="sb-p1-b">0</span></div>
+            <div style="border-top: 1px solid #444; margin: 5px 0;"></div>
+            <div class="sb-row" style="color:#3333ff;"><span>BLUE Kills:</span> <span id="sb-p2-k">0</span></div>
+            <div class="sb-row" style="color:#3333ff;"><span>BLUE Beds Brk:</span> <span id="sb-p2-b">0</span></div>
+        </div>
+
+        <div id="victory"><div id="vic-txt"></div><button id="restart" onclick="resetGame()">PLAY AGAIN</button></div>
+    </div>
+
+    <div class="fs-container">
+        <button class="fs-btn" onclick="toggleFullscreen()">GO FULLSCREEN</button>
+    </div>
+
+    <div id="footer-bar">
+        <div><b style="color:#ff3333;">RED (P1):</b> Move: <span class="key-badge">A</span>/<span class="key-badge">D</span> | Jump: <span class="key-badge">W</span> | <span style="color:#ffd700;">Block Under:</span> <span class="key-badge">S</span> | Attack: <span class="key-badge">F</span></div>
+        <div style="color: #ffd700; text-align:center;">🔥 FLAWLESS BRIDGES FIXED 🔥</div>
+        <div><b style="color:#3333ff;">BLUE (P2):</b> Move: <span class="key-badge">←</span>/<span class="key-badge">→</span> | Jump: <span class="key-badge">↑</span> | <span style="color:#ffd700;">Block Under:</span> <span class="key-badge">↓</span> | Attack: <span class="key-badge">/</span></div>
+    </div>
 
         resetGame(); gameLoop();
     </script>
