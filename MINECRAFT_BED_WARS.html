@@ -727,7 +727,47 @@
             document.getElementById("sb-p1-beds").innerText = scores.p1Beds;
             document.getElementById("sb-p2-kills").innerText = scores.p2Kills;
             document.getElementById("sb-p2-beds").innerText = scores.p2Beds;
-        // Close the Game Engine Loop safely
+        function tryPlaceBlock(player, blockType) {
+    if (player.blocks <= 0) return;
+    // Calculate grid coordinates directly below the player's center feet
+    let targetCol = Math.floor((player.x + player.width / 2) / TILE_SIZE);
+    let targetRow = Math.floor((player.y + player.height + 2) / TILE_SIZE);
+    
+    if (targetCol >= 0 && targetCol < GRID_WIDTH && targetRow >= 0 && targetRow < GRID_HEIGHT) {
+        if (grid[targetRow][targetCol] === BLOCKS.AIR) { 
+            grid[targetRow][targetCol] = blockType; 
+            player.blocks--; 
+        }
+    }
+}
+function buyItem(team, type) {
+    if (gameOver) return; 
+    let p = team === 1 ? p1 : p2;
+    
+    if (type === 'sword' && p.iron >= 4 && p.swordTier === 0) { 
+        p.iron -= 4; 
+        p.swordTier = 1; 
+    }
+    if (type === 'armor' && p.iron >= 6 && p.armorTier === 0) { 
+        p.iron -= 6; 
+        p.armorTier = 1; 
+    }
+    if (type === 'tnt' && p.iron >= 3) { 
+        p.iron -= 3; 
+        p.tntCount++; 
+    }
+    if (type === 'd_sword' && p.diamonds >= 2 && p.swordTier === 1) { 
+        p.diamonds -= 2; 
+        p.swordTier = 2; 
+    }
+    if (type === 'd_armor' && p.diamonds >= 3 && p.armorTier === 1) { 
+        p.diamonds -= 3; 
+        p.armorTier = 2; 
+    }
+    updateLabels(); // Forces the HUD display text to update immediately
+}
+<div id="instructions" style="display: none;"></div>
+            // Close the Game Engine Loop safely
         console.log("Bed Wars Engine successfully initialized.");
     </script>
 </body>
