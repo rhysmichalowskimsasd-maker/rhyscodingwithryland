@@ -211,6 +211,51 @@
     </script>
 </body>
 </html>
+        .fs-container { margin-top: 10px; display: flex; justify-content: center; }
+        .fs-btn { 
+            background: #e67e22; color: #fff; border: 2px solid #d35400; padding: 6px 12px; 
+            font-size: 13px; font-family: inherit; font-weight: bold; cursor: pointer; border-radius: 4px;
+        }
+        .fs-btn:hover { background: #d35400; }
+        /* Keep game screen beautifully centered in actual browser fullscreen mode */
+        canvas:fullscreen { background: #70b5ff; width: 100vw; height: 100vh; border: none; }
+    <div class="fs-container">
+        <button class="fs-btn" onclick="toggleFullscreen()">GO FULLSCREEN [F]</button>
+    </div>
+        function toggleFullscreen() {
+            const canvasEl = document.getElementById("gameCanvas");
+            if (!document.fullscreenElement) {
+                // Request modern browser window optimization layers
+                canvasEl.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen mode: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Connect a keyboard hotkey shortcut trigger to go fullscreen easily
+        window.addEventListener("keydown", e => {
+            if (e.key.toLowerCase() === 'f' && !gameOver) {
+                // Ensure text fields are not active during shortcut checks
+                const activeTag = document.activeElement.tagName.toLowerCase();
+                if (activeTag !== 'input' && activeTag !== 'textarea') {
+                    // If you use 'F' for Player 1 attacking, change this key string to 'g' or 'l'
+                    toggleFullscreen();
+                }
+            }
+        });
+
+        // Event listener to scale view parameters automatically on dimension shifts
+        document.addEventListener('fullscreenchange', () => {
+            const canvasEl = document.getElementById("gameCanvas");
+            if (document.fullscreenElement) {
+                console.log("Bed Wars Engine resized to fullscreen profile.");
+            } else {
+                console.log("Bed Wars Engine restored to classic grid viewport layout.");
+            }
+        });
+
         // Bed Wars game configuration completely locked and sealed.
         console.log("All systems online. Match ready.");
     </script>
