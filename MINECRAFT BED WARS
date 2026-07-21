@@ -727,3 +727,8 @@
             document.getElementById("sb-p1-beds").innerText = scores.p1Beds;
             document.getElementById("sb-p2-kills").innerText = scores.p2Kills;
             document.getElementById("sb-p2-beds").innerText = scores.p2Beds;
+        // Close the Game Engine Loop safely
+        console.log("Bed Wars Engine successfully initialized.");
+    </script>
+</body>
+</html>
