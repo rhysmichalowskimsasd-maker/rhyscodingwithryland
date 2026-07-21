@@ -2,773 +2,463 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2D 2-Player Bed Wars Minecraft Clone</title>
+    <title>Minecraft Bed Wars 2P Local</title>
     <style>
-        body {
-            margin: 0; padding: 0; background: #111; color: #fff;
-            font-family: sans-serif; display: flex; flex-direction: column;
-            align-items: center; user-select: none; overflow: hidden;
-        }
-        #game-container { position: relative; margin-top: 10px; }
-        canvas { display: block; background: #87CEEB; border: 4px solid #333; }
-        #ui-overlay {
-            position: absolute; top: 10px; left: 10px; right: 10px;
-            display: flex; justify-content: space-between; pointer-events: none;
-        }
-        .player-card { background: rgba(0, 0, 0, 0.6); padding: 8px 15px; border-radius: 5px; font-size: 14px; }
-        .p1-card { border-left: 5px solid #ff4444; }
-        .p2-card { border-right: 5px solid #4444ff; text-align: right; }
-        #instructions { margin-top: 5px; background: #222; padding: 10px; border-radius: 5px; display: flex; gap: 20px; font-size: 12px; }
-        .key { background: #444; padding: 2px 6px; border-radius: 3px; }
-        #victory-screen {
-            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); flex-direction: column; justify-content: center; align-items: center;
-        }
-        #victory-text { font-size: 48px; font-weight: bold; margin-bottom: 20px; }
-        #restart-btn { background: #4CAF50; color: white; border: none; padding: 10px 20px; font-size: 18px; cursor: pointer; border-radius: 5px; }
+        body { margin: 0; background: #111; color: #fff; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; user-select: none; overflow: hidden; }
+        #game-container { position: relative; margin-top: 15px; }
+        canvas { display: block; background: #70b5ff; border: 4px solid #444; border-radius: 4px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        #ui { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; pointer-events: none; }
+        .card { background: rgba(20, 20, 20, 0.85); padding: 12px; border-radius: 6px; font-size: 14px; border: 2px solid #555; line-height: 1.4; width: 220px; }
+        .p1-c { border-left: 6px solid #ff3333; } .p2-c { border-right: 6px solid #3333ff; text-align: right; }
+        .shop-list { margin-top: 5px; font-size: 11px; color: #bbb; text-align: left; }
+        .p2-c .shop-list { text-align: right; }
+        .highlight { color: #ffd700; font-weight: bold; }
+        #victory { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; font-size: 40px; font-weight: bold; border-radius: 4px; z-index: 10; }
+        #restart { background: #28a745; color: #fff; border: none; padding: 10px 20px; font-size: 18px; cursor: pointer; border-radius: 5px; margin-top: 20px; font-family: inherit; font-weight: bold; }
+        #footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #222; border-top: 3px solid #444; padding: 10px; display: flex; justify-content: space-around; font-size: 13px; font-weight: bold; }
+        .key-badge { background: #444; padding: 2px 6px; border-radius: 4px; border: 1px solid #666; }
     </style>
 </head>
 <body>
-    <h2 style="margin: 5px 0 0 0;">MINECRAFT BED WARS (2-PLAYER)</h2>
     <div id="game-container">
-        <canvas id="gameCanvas" width="900" height="450"></canvas>
-        <div id="ui-overlay">
-            <div class="player-card p1-card">
-                <strong style="color:#ff4444;">RED (P1)</strong><br>
-                HP: <span id="p1-hp">100</span>% | Bed: <span id="p1-bed">ALIVE</span><br>
-                Blocks: <span id="p1-blocks">10</span> | Iron: <span id="p1-iron">0</span>
+        <canvas id="gameCanvas" width="960" height="460"></canvas>
+        <div id="ui">
+            <!-- RED PLAYER HUD & SHOP KEYS -->
+            <div class="card p1-c">
+                <b style="color:#ff3333;">RED (P1)</b><br>
+                HP: <span id="p1-hp">100</span>% | Bed: <span id="p1-bed">OK</span><br>
+                Blocks: <span id="p1-bl">20</span> | Iron: <span id="p1-ir">0</span><br>
+                Sword: <span id="p1-sw">Wood</span> | Armor: <span id="p1-ar">None</span>
+                <div class="shop-list">
+                    <b>HOTKEY SHOP:</b><br>
+                    Press <span class="highlight">[1]</span> Stone Sword (4 Iron)<br>
+                    Press <span class="highlight">[2]</span> Chainmail (6 Iron)
+                </div>
             </div>
-            <div class="player-card p2-card">
-                <strong style="color:#4444ff;">BLUE (P2)</strong><br>
-                HP: <span id="p2-hp">100</span>% | Bed: <span id="p2-bed">ALIVE</span><br>
-                Blocks: <span id="p2-blocks">10</span> | Iron: <span id="p2-iron">0</span>
+            <!-- BLUE PLAYER HUD & SHOP KEYS -->
+            <div class="card p2-c">
+                <b style="color:#3333ff;">BLUE (P2)</b><br>
+                HP: <span id="p2-hp">100</span>% | Bed: <span id="p2-bed">OK</span><br>
+                Blocks: <span id="p2-bl">20</span> | Iron: <span id="p2-ir">0</span><br>
+                Sword: <span id="p2-sw">Wood</span> | Armor: <span id="p2-ar">None</span>
+                <div class="shop-list">
+                    <b>HOTKEY SHOP:</b><br>
+                    Press <span class="highlight">[B]</span> Stone Sword (4 Iron)<br>
+                    Press <span class="highlight">[N]</span> Chainmail (6 Iron)
+                </div>
             </div>
         </div>
-        <div id="victory-screen">
-            <div id="victory-text">RED WINS!</div>
-            <button id="restart-btn" onclick="resetGame()">Play Again</button>
-        </div>
+        <div id="victory"><div id="vic-txt"></div><button id="restart" onclick="resetGame()">PLAY AGAIN</button></div>
     </div>
-    <div id="instructions">
-        <div><strong style="color:#ff4444;">P1 (Red):</strong> Move: <span class="key">A</span>/<span class="key">D</span> | Jump: <span class="key">W</span> | Build: <span class="key">S</span> | Break/Attack: <span class="key">F</span></div>
-        <div><strong style="color:#4444ff;">P2 (Blue):</strong> Move: <span class="key">←</span>/<span class="key">→</span> | Jump: <span class="key">↑</span> | Build: <span class="key">↓</span> | Break/Attack: <span class="key">/</span></div>
-        <div><strong>Rules:</strong> Stand near center <span style="color:#ccc;font-weight:bold;">Iron Spawners</span>. Iron trades automatically for Wool Blocks at your base!</div>
+    <!-- FOOTER INSTRUCTIONS ALWAYS VISIBLE AT BOTTOM -->
+    <div id="footer-bar">
+        <div><b style="color:#ff3333;">RED (P1):</b> Move: <span class="key-badge">A</span>/<span class="key-badge">D</span> | Jump: <span class="key-badge">W</span> | <span style="color:#ffd700;">Block Under:</span> <span class="key-badge">S</span> | Attack: <span class="key-badge">F</span></div>
+        <div style="color: #ffd700;">RULES: Forge generators produce iron. Stands near base to trade automatically!</div>
+        <div><b style="color:#3333ff;">BLUE (P2):</b> Move: <span class="key-badge">←</span>/<span class="key-badge">→</span> | Jump: <span class="key-badge">↑</span> | <span style="color:#ffd700;">Block Under:</span> <span class="key-badge">↓</span> | Attack: <span class="key-badge">/</span></div>
     </div>
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
-        const TILE_SIZE = 30;
-        const GRID_WIDTH = canvas.width / TILE_SIZE;  
-        const GRID_HEIGHT = canvas.height / TILE_SIZE; 
-        const GRAVITY = 0.4;
+        const TILE = 24, GRAVITY = 0.38;
+        const GRID_W = canvas.width / TILE, GRID_H = canvas.height / TILE;
 
-        const BLOCKS = { AIR: 0, DIRT: 1, IRON_GEN: 2, P1_BED: 3, P2_BED: 4, RED_WOOL: 5, BLUE_WOOL: 6 };
-        const COLORS = { 0: "transparent", 1: "#795548", 2: "#9e9e9e", 3: "#d32f2f", 4: "#1976d2", 5: "#ef5350", 6: "#42a5f5" };
+        const BLOCKS = { AIR: 0, STONE: 1, FORGE: 2, P1_BED: 3, P2_BED: 4, RED_WOOL: 5, BLUE_WOOL: 6 };
+        const COLORS = { 0: "transparent", 1: "#555555", 2: "#aaaaaa", 3: "#d32f2f", 4: "#1976d2", 5: "#ef5350", 6: "#42a5f5" };
 
-        let grid = [];
-        let p1, p2;
-        let ironSpawnerTimer = 0;
-        let gameOver = false;
+        let grid = [], p1, p2, forgeTimer = 0, gameOver = false;
         const keys = {};
 
-        window.addEventListener("keydown", e => { keys[e.key.toLowerCase()] = true; });
+        window.addEventListener("keydown", e => { 
+            const k = e.key.toLowerCase(); keys[k] = true; 
+            if (!gameOver) {
+                if (k === '1') buyItem(1, 'sword'); if (k === '2') buyItem(1, 'armor');
+                if (k === 'b') buyItem(2, 'sword'); if (k === 'n') buyItem(2, 'armor');
+                if (k === 's') placeUnderFeet(p1, BLOCKS.RED_WOOL);
+                if (k === 'f') performAction(p1, p2);
+                if (k === 'arrowdown') placeUnderFeet(p2, BLOCKS.BLUE_WOOL);
+                if (k === '/') performAction(p2, p1);
+            }
+        });
         window.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
 
         function initGrid() {
             grid = [];
-            for (let r = 0; r < GRID_HEIGHT; r++) {
+            for (let r = 0; r < GRID_H; r++) {
                 grid[r] = [];
-                for (let c = 0; c < GRID_WIDTH; c++) {
+                for (let c = 0; c < GRID_W; c++) {
                     let type = BLOCKS.AIR;
-                    if (r === 10 && c >= 1 && c <= 6) type = BLOCKS.DIRT;      // Left Island
-                    if (r === 10 && c >= 23 && c <= 28) type = BLOCKS.DIRT;    // Right Island
-                    if (r === 12 && c >= 12 && c <= 17) type = BLOCKS.DIRT;    // Center Forge Island
-                    if (r === 11 && (c === 14 || c === 15)) type = BLOCKS.IRON_GEN; // Spawners
-                    if (r === 9 && c === 2) type = BLOCKS.P1_BED;              // Red Bed
-                    if (r === 9 && c === 27) type = BLOCKS.P2_BED;             // Blue Bed
+                    if (r === 14 && ((c >= 1 && c <= 7) || (c >= 32 && c <= 38))) type = BLOCKS.STONE;
+                    if (r === 16 && c >= 14 && c <= 25) type = BLOCKS.STONE;
+                    if (r === 15 && (c === 19 || c === 20)) type = BLOCKS.FORGE;
+                    if (r === 13 && c === 2) type = BLOCKS.P1_BED;
+                    if (r === 13 && c === 37) type = BLOCKS.P2_BED;
                     grid[r][c] = type;
                 }
             }
         }
+
         class Player {
             constructor(x, y, color, team) {
                 this.spawnX = x; this.spawnY = y; this.x = x; this.y = y;
-                this.vx = 0; this.vy = 0; this.width = 20; this.height = 28;
+                this.vx = 0; this.vy = 0; this.w = 16; this.h = 26;
                 this.color = color; this.team = team; this.hp = 100;
-                this.blocks = 10; this.iron = 0; this.facingDir = team === 1 ? 1 : -1;
+                this.blocks = 20; this.iron = 0; this.swordTier = 0; this.armorTier = 0;
             }
             reset() { this.x = this.spawnX; this.y = this.spawnY; this.vx = 0; this.vy = 0; this.hp = 100; }
             update() {
-                this.vy += GRAVITY;
-                this.x += this.vx; this.collide(this.vx, 0);
-                this.y += this.vy; this.collide(0, this.vy);
-                if (this.y > canvas.height) this.takeDamage(100);
-
-                // Auto Forge Trade-In: 2 Iron = 5 Blocks when at home island base
-                const currentCol = Math.floor((this.x + this.width / 2) / TILE_SIZE);
+                this.vy += GRAVITY; this.x += this.vx; this.collide(this.vx, 0); this.y += this.vy; this.collide(0, this.vy);
+                if (this.y > canvas.height) this.respawnOrDie();
+                let currentCc = Math.floor((this.x + this.w / 2) / TILE);
                 if (this.iron >= 2) {
-                    if ((this.team === 1 && currentCol <= 6) || (this.team === 2 && currentCol >= 23)) {
-                        this.iron -= 2; this.blocks += 5;
-                    }
+                    if ((this.team === 1 && currentCc <= 7) || (this.team === 2 && currentCc >= 32)) { this.iron -= 2; this.blocks += 5; }
                 }
             }
             collide(vx, vy) {
-                for (let r = 0; r < GRID_HEIGHT; r++) {
-                    for (let c = 0; c < GRID_WIDTH; c++) {
+                for (let r = 0; r < GRID_H; r++) {
+                    for (let c = 0; c < GRID_W; c++) {
                         if (grid[r][c] !== BLOCKS.AIR) {
-                            let bx = c * TILE_SIZE, by = r * TILE_SIZE;
-                            if (this.x < bx + TILE_SIZE && this.x + this.width > bx && this.y < by + TILE_SIZE && this.y + this.height > by) {
-                                if (vx > 0) this.x = bx - this.width;
-                                if (vx < 0) this.x = bx + TILE_SIZE;
-                                if (vy > 0) { this.y = by - this.height; this.vy = 0; }
-                                if (vy < 0) { this.y = by + TILE_SIZE; this.vy = 0; }
+                            let bx = c * TILE, by = r * TILE;
+                            if (this.x < bx + TILE && this.x + this.w > bx && this.y < by + TILE && this.y + this.h > by) {
+                                if (vx > 0) this.x = bx - this.w; if (vx < 0) this.x = bx + TILE;
+                                if (vy > 0) { this.y = by - this.h; this.vy = 0; } if (vy < 0) { this.y = by + TILE; this.vy = 0; }
                             }
                         }
                     }
                 }
             }
-            takeDamage(amount) {
-                this.hp -= amount;
-                if (this.hp <= 0) {
-                    if (isBedAlive(this.team)) { this.reset(); } 
-                    else { this.hp = 0; endGame(this.team === 1 ? 2 : 1); }
-                }
-            }
-            draw() {
-                ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.width, this.height);
-                ctx.fillStyle = "#fff";     ctx.fillRect(this.x + (this.facingDir === 1 ? this.width - 6 : 2), this.y + 4, 4, 4);
+            respawnOrDie() {
+                let targetBed = this.team === 1 ? BLOCKS.P1_BED : BLOCKS.P2_BED;
+                if (grid.some(row => row.includes(targetBed))) { this.reset(); } 
+                else { this.hp = 0; endGame(this.team === 1 ? 2 : 1); }
             }
         }
-        function isBedAlive(team) {
-            let bedBlock = team === 1 ? BLOCKS.P1_BED : BLOCKS.P2_BED;
-            return grid.some(row => row.includes(bedBlock));
-        }
-        function handleInput() {
+        function handleMovement() {
             if (gameOver) return;
-            p1.vx = 0;
-            if (keys['a']) { p1.vx = -3; p1.facingDir = -1; }
-            if (keys['d']) { p1.vx = 3; p1.facingDir = 1; }
-            if (keys['w'] && p1.vy === 0) p1.vy = -7.5;
-
-            p2.vx = 0;
-            if (keys['arrowleft']) { p2.vx = -3; p2.facingDir = -1; }
-            if (keys['arrowright']) { p2.vx = 3; p2.facingDir = 1; }
-            if (keys['arrowup'] && p2.vy === 0) p2.vy = -7.5;
+            p1.vx = keys['a'] ? -3.2 : (keys['d'] ? 3.2 : 0); if (keys['w'] && p1.vy === 0) p1.vy = -7.2;
+            p2.vx = keys['arrowleft'] ? -3.2 : (keys['arrowright'] ? 3.2 : 0); if (keys['arrowup'] && p2.vy === 0) p2.vy = -7.2;
         }
 
-        window.addEventListener("keydown", e => {
-            if (gameOver) return; const k = e.key.toLowerCase();
-            if (k === 's') tryPlaceBlock(p1, BLOCKS.RED_WOOL);
-            if (k === 'f') tryBreakOrAttack(p1, p2);
-            if (k === 'arrowdown') tryPlaceBlock(p2, BLOCKS.BLUE_WOOL);
-            if (k === '/') tryBreakOrAttack(p2, p1);
-        });
+        function placeUnderFeet(p, blockType) {
+            if (p.blocks <= 0) return;
+            let c = Math.floor((p.x + p.w / 2) / TILE), r = Math.floor((p.y + p.h + 1) / TILE);
+            if (c >= 0 && c < GRID_W && r >= 0 && r < GRID_H && grid[r][c] === BLOCKS.AIR) { grid[r][c] = blockType; p.blocks--; }
+        }
 
-        function tryPlaceBlock(player, blockType) {
-            if (player.blocks <= 0) return;
-            let targetCol = Math.floor((player.x + (player.facingDir === 1 ? player.width + 5 : -15)) / TILE_SIZE);
-            let targetRow = Math.floor((player.y + player.height / 2) / TILE_SIZE);
-            if (targetCol >= 0 && targetCol < GRID_WIDTH && targetRow >= 0 && targetRow < GRID_HEIGHT) {
-                if (grid[targetRow][targetCol] === BLOCKS.AIR) { grid[targetRow][targetCol] = blockType; player.blocks--; }
+        function performAction(attacker, opponent) {
+            let distance = Math.hypot((attacker.x + attacker.w/2) - (opponent.x + opponent.w/2), (attacker.y + attacker.h/2) - (opponent.y + opponent.h/2));
+            if (distance < 42) {
+                let damageAmount = attacker.swordTier === 0 ? 15 : 32, absorption = opponent.armorTier === 1 ? 0.35 : 0;
+                opponent.hp -= Math.round(damageAmount * (1 - absorption));
+                opponent.vx += (attacker.x < opponent.x ? 1 : -1) * 5; opponent.vy -= 2;
+                if (opponent.hp <= 0) opponent.respawnOrDie(); return;
+            }
+            let lookAheadCol = Math.floor((attacker.x + (attacker.vx >= 0 ? attacker.w + 12 : -12)) / TILE), lookAheadRow = Math.floor((attacker.y + attacker.h / 2) / TILE);
+            if (lookAheadCol >= 0 && lookAheadCol < GRID_W && lookAheadRow >= 0 && lookAheadRow < GRID_H) {
+                let targetedBlock = grid[lookAheadRow][lookAheadCol];
+                if (targetedBlock !== BLOCKS.AIR && targetedBlock !== BLOCKS.STONE && targetedBlock !== BLOCKS.FORGE) grid[lookAheadRow][lookAheadCol] = BLOCKS.AIR;
             }
         }
 
-        function tryBreakOrAttack(attacker, opponent) {
-            let targetCol = Math.floor((attacker.x + (attacker.facingDir === 1 ? attacker.width + 12 : -20)) / TILE_SIZE);
-            let targetRow = Math.floor((attacker.y + attacker.height / 2) / TILE_SIZE);
-            let dist = Math.hypot((attacker.x + attacker.width/2) - (opponent.x + opponent.width/2), (attacker.y + attacker.height/2) - (opponent.y + opponent.height/2));
-            if (dist < 45) { opponent.takeDamage(25); opponent.vx += attacker.facingDir * 5; opponent.vy -= 3; return; }
-            if (targetCol >= 0 && targetCol < GRID_WIDTH && targetRow >= 0 && targetRow < GRID_HEIGHT) {
-                let block = grid[targetRow][targetCol];
-                if (block !== BLOCKS.AIR && block !== BLOCKS.IRON_GEN && block !== BLOCKS.DIRT) grid[targetRow][targetCol] = BLOCKS.AIR;
-            }
+        function buyItem(team, itemType) {
+            let targetPlayer = team === 1 ? p1 : p2;
+            if (itemType === 'sword' && targetPlayer.iron >= 4 && targetPlayer.swordTier === 0) { targetPlayer.iron -= 4; targetPlayer.swordTier = 1; }
+            if (itemType === 'armor' && targetPlayer.iron >= 6 && targetPlayer.armorTier === 0) { targetPlayer.iron -= 6; targetPlayer.armorTier = 1; }
         }
 
-        function updateSpawners() {
-            ironSpawnerTimer++;
-            if (ironSpawnerTimer >= 90) {
-                ironSpawnerTimer = 0;
-                for (let r = 0; r < GRID_HEIGHT; r++) {
-                    for (let c = 0; c < GRID_WIDTH; c++) {
-                        if (grid[r][c] === BLOCKS.IRON_GEN) {
-                            let bx = c * TILE_SIZE + TILE_SIZE/2, by = r * TILE_SIZE + TILE_SIZE/2;
-                            [p1, p2].forEach(p => { if (Math.hypot((p.x+p.width/2)-bx, (p.y+p.height/2)-by) < TILE_SIZE*2.5) p.iron++; });
+        function updateGame() {
+            handleMovement(); p1.update(); p2.update(); forgeTimer++;
+            if (forgeTimer >= 75) {
+                forgeTimer = 0;
+                for (let r = 0; r < GRID_H; r++) {
+                    for (let c = 0; c < GRID_W; c++) {
+                        if (grid[r][c] === BLOCKS.FORGE) {
+                            let bx = c * TILE + TILE/2, by = r * TILE + TILE/2;
+                            [p1, p2].forEach(p => { if (Math.hypot((p.x+p.w/2)-bx, (p.y+p.h/2)-by) < TILE * 3.5) p.iron++; });
                         }
                     }
-                }
-            }
-        }
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let r = 0; r < GRID_HEIGHT; r++) {
-                for (let c = 0; c < GRID_WIDTH; c++) {
-                    let block = grid[r][c];
-                    if (block !== BLOCKS.AIR) {
-                        ctx.fillStyle = COLORS[block]; ctx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                        ctx.strokeStyle = "rgba(0,0,0,0.15)"; ctx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                        if (block === BLOCKS.IRON_GEN) { ctx.fillStyle = "#fff"; ctx.fillRect(c * TILE_SIZE + 10, r * TILE_SIZE + 10, 10, 10); }
-                        if (block === BLOCKS.P1_BED || block === BLOCKS.P2_BED) { ctx.fillStyle = "#fff"; ctx.fillRect(c * TILE_SIZE + 4, r * TILE_SIZE + 15, 22, 8); }
-                    }
-                }
-            }
-            p1.draw(); p2.draw();
-            document.getElementById("p1-hp").innerText = p1.hp;
-            document.getElementById("p1-bed").innerText = isBedAlive(1) ? "ALIVE" : "DESTROYED";
-            document.getElementById("p1-blocks").innerText = p1.blocks; document.getElementById("p1-iron").innerText = p1.iron;
-            document.getElementById("p2-hp").innerText = p2.hp;
-            document.getElementById("p2-bed").innerText = isBedAlive(2) ? "ALIVE" : "DESTROYED";
-            document.getElementById("p2-blocks").innerText = p2.blocks; document.getElementById("p2-iron").innerText = p2.iron;
-        }
-
-        function gameLoop() { handleInput(); p1.update(); p2.update(); updateSpawners(); draw(); requestAnimationFrame(gameLoop); }
-        function endGame(winner) {
-            gameOver = true; const screen = document.getElementById("victory-screen");
-            const text = document.getElementById("victory-text");
-            text.innerText = winner === 1 ? "RED TEAM WINS!" : "BLUE TEAM WINS!";
-            text.style.color = winner === 1 ? "#ff4444" : "#4444ff"; screen.style.display = "flex";
-        }
-        function resetGame() {
-            document.getElementById("victory-screen").style.display = "none";
-            gameOver = false; initGrid();
-            p1 = new Player(60, 200, "#ff4444", 1); p2 = new Player(820, 200, "#4444ff", 2);
-        }
-        resetGame(); gameLoop();
-    </script>
-</body>
-</html>
-        .shop-container { display: flex; gap: 5px; margin-top: 5px; justify-content: center; }
-        .shop-btn { 
-            background: #333; color: #fff; border: 2px solid #555; padding: 4px 8px; 
-            font-size: 11px; cursor: pointer; border-radius: 4px; font-weight: bold;
-        }
-        .shop-btn:hover { background: #444; border-color: #aaa; }
-        .shop-btn span { color: #ffd700; }
-        .tier-indicator { font-size: 11px; opacity: 0.8; color: #aaa; }
-<body>
-    <h2 style="margin: 5px 0 0 0;">MINECRAFT BED WARS (2-PLAYER)</h2>
-    <div id="game-container">
-        <canvas id="gameCanvas" width="900" height="450"></canvas>
-        <div id="ui-overlay">
-            <div class="player-card p1-card">
-                <strong style="color:#ff4444;">RED (P1)</strong><br>
-                HP: <span id="p1-hp">100</span>% | Bed: <span id="p1-bed">ALIVE</span><br>
-                Blocks: <span id="p1-blocks">10</span> | Iron: <span id="p1-iron">0</span>
-                <div class="tier-indicator">Sword: <span id="p1-sword">Wooden</span> | Armor: <span id="p1-armor">None</span></div>
-                <div class="shop-container">
-                    <button class="shop-btn" onclick="buyItem(1, 'sword')">Sword (<span>4 Iron</span>)</button>
-                    <button class="shop-btn" onclick="buyItem(1, 'armor')">Armor (<span>6 Iron</span>)</button>
-                </div>
-            </div>
-            <div class="player-card p2-card">
-                <strong style="color:#4444ff;">BLUE (P2)</strong><br>
-                HP: <span id="p2-hp">100</span>% | Bed: <span id="p2-bed">ALIVE</span><br>
-                Blocks: <span id="p2-blocks">10</span> | Iron: <span id="p2-iron">0</span>
-                <div class="tier-indicator">Sword: <span id="p2-sword">Wooden</span> | Armor: <span id="p2-armor">None</span></div>
-                <div class="shop-container">
-                    <button class="shop-btn" onclick="buyItem(2, 'sword')">Sword (<span>4 Iron</span>)</button>
-                    <button class="shop-btn" onclick="buyItem(2, 'armor')">Armor (<span>6 Iron</span>)</button>
-                </div>
-            </div>
-        </div>
-        <div id="victory-screen">
-            <div id="victory-text">RED WINS!</div>
-            <button id="restart-btn" onclick="resetGame()">Play Again</button>
-        </div>
-    </div>
-            constructor(x, y, color, team) {
-                this.spawnX = x; this.spawnY = y; this.x = x; this.y = y;
-                this.vx = 0; this.vy = 0; this.width = 20; this.height = 28;
-                this.color = color; this.team = team; this.hp = 100;
-                this.blocks = 10; this.iron = 0; this.facingDir = team === 1 ? 1 : -1;
-                // New Combat Progression Tiers
-                this.swordTier = 0; // 0 = Wood (20 dmg), 1 = Stone (35 dmg), 2 = Iron (50 dmg)
-                this.armorTier = 0; // 0 = None (0% reduction), 1 = Chain (25%), 2 = Iron (50%)
-            }
-            takeDamage(amount) {
-                // Apply armor reductions: Tier 1 blocks 25% damage, Tier 2 blocks 50% damage
-                let reduction = this.armorTier === 1 ? 0.25 : (this.armorTier === 2 ? 0.50 : 0);
-                if (amount < 100) amount = amount * (1 - reduction);
-                
-                this.hp -= Math.round(amount);
-                if (this.hp <= 0) {
-                    if (isBedAlive(this.team)) { this.reset(); } 
-                    else { this.hp = 0; endGame(this.team === 1 ? 2 : 1); }
-                }
-            }
-        function tryBreakOrAttack(attacker, opponent) {
-            let targetCol = Math.floor((attacker.x + (attacker.facingDir === 1 ? attacker.width + 12 : -20)) / TILE_SIZE);
-            let targetRow = Math.floor((attacker.y + attacker.height / 2) / TILE_SIZE);
-            let dist = Math.hypot((attacker.x + attacker.width/2) - (opponent.x + opponent.width/2), (attacker.y + attacker.height/2) - (opponent.y + opponent.height/2));
-            
-            if (dist < 45) { 
-                // Calculate dynamic scaling damage
-                let baseDamage = attacker.swordTier === 0 ? 20 : (attacker.swordTier === 1 ? 35 : 50);
-                opponent.takeDamage(baseDamage); 
-                opponent.vx += attacker.facingDir * (5 + attacker.swordTier * 2); // Dynamic Knockback increase
-                opponent.vy -= 3; 
-                return; 
-            }
-            if (targetCol >= 0 && targetCol < GRID_WIDTH && targetRow >= 0 && targetRow < GRID_HEIGHT) {
-                let block = grid[targetRow][targetCol];
-                if (block !== BLOCKS.AIR && block !== BLOCKS.IRON_GEN && block !== BLOCKS.DIRT) grid[targetRow][targetCol] = BLOCKS.AIR;
-            }
-        }
-        function buyItem(playerTeam, itemType) {
-            if (gameOver) return;
-            let p = playerTeam === 1 ? p1 : p2;
-            
-            if (itemType === 'sword') {
-                if (p.iron >= 4 && p.swordTier < 2) {
-                    p.iron -= 4; p.swordTier++;
-                }
-            } else if (itemType === 'armor') {
-                if (p.iron >= 6 && p.armorTier < 2) {
-                    p.iron -= 6; p.armorTier++;
-                }
-            }
-        }
-
-        // Paste this mini block INSIDE your draw() loop function (Batch 6) to keep text labels updated:
-        function updateLabels() {
-            const swordNames = ["Wooden", "Stone", "Iron MAX"];
-            const armorNames = ["None", "Chainmail", "Iron MAX"];
-            document.getElementById("p1-sword").innerText = swordNames[p1.swordTier];
-            document.getElementById("p1-armor").innerText = armorNames[p1.armorTier];
-            document.getElementById("p2-sword").innerText = swordNames[p2.swordTier];
-            document.getElementById("p2-armor").innerText = armorNames[p2.armorTier];
-        }
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        const TILE_SIZE = 30;
-        const GRID_WIDTH = canvas.width / TILE_SIZE;  
-        const GRID_HEIGHT = canvas.height / TILE_SIZE; 
-        const GRAVITY = 0.4;
-
-        // Expanded block registry with TNT and Diamonds
-        const BLOCKS = { AIR: 0, DIRT: 1, IRON_GEN: 2, P1_BED: 3, P2_BED: 4, RED_WOOL: 5, BLUE_WOOL: 6, TNT: 7, DIAMOND_GEN: 8 };
-        const COLORS = { 0: "transparent", 1: "#795548", 2: "#9e9e9e", 3: "#d32f2f", 4: "#1976d2", 5: "#ef5350", 6: "#42a5f5", 7: "#cc0000", 8: "#00e5ff" };
-
-        let grid = [];
-        let p1, p2;
-        let ironSpawnerTimer = 0;
-        let diamondSpawnerTimer = 0;
-        let tntExplosions = []; // Holds active exploding particle effects
-        let gameOver = false;
-        const keys = {};
-
-        window.addEventListener("keydown", e => { keys[e.key.toLowerCase()] = true; });
-        window.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
-        function initGrid() {
-            grid = [];
-            for (let r = 0; r < GRID_HEIGHT; r++) {
-                grid[r] = [];
-                for (let c = 0; c < GRID_WIDTH; c++) {
-                    let type = BLOCKS.AIR;
-                    
-                    // Structural Islands Configuration
-                    if (r === 11 && c >= 1 && c <= 6) type = BLOCKS.DIRT;      // Left Island (Base 1)
-                    if (r === 11 && c >= 23 && c <= 28) type = BLOCKS.DIRT;    // Right Island (Base 2)
-                    if (r === 13 && c >= 11 && c <= 18) type = BLOCKS.DIRT;    // Center Low Forge
-                    if (r === 5 && c >= 13 && c <= 16) type = BLOCKS.DIRT;     // NEW High Diamond Floating Sky Forge
-                    
-                    // Resource Block Spawners placement
-                    if (r === 12 && (c === 14 || c === 15)) type = BLOCKS.IRON_GEN;
-                    if (r === 4 && (c === 14 || c === 15)) type = BLOCKS.DIAMOND_GEN;
-                    
-                    // Team Beds Setup
-                    if (r === 10 && c === 2) type = BLOCKS.P1_BED; 
-                    if (r === 10 && c === 27) type = BLOCKS.P2_BED;
-                    
-                    grid[r][c] = type;
-                }
-            }
-            tntExplosions = [];
-        }
-        class Player {
-            constructor(x, y, color, team) {
-                this.spawnX = x; this.spawnY = y; this.x = x; this.y = y;
-                this.vx = 0; this.vy = 0; this.width = 20; this.height = 28;
-                this.color = color; this.team = team; this.hp = 100;
-                this.blocks = 15; this.iron = 0; this.diamonds = 0; this.tntCount = 0;
-                this.facingDir = team === 1 ? 1 : -1;
-                this.swordTier = 0; // 0: Wood, 1: Stone, 2: Diamond Max
-                this.armorTier = 0; // 0: None, 1: Chainmail, 2: Diamond Max
-            }
-            reset() { this.x = this.spawnX; this.y = this.spawnY; this.vx = 0; this.vy = 0; this.hp = 100; }
-            update() {
-                this.vy += GRAVITY;
-                this.x += this.vx; this.collide(this.vx, 0);
-                this.y += this.vy; this.collide(0, this.vy);
-                if (this.y > canvas.height) this.takeDamage(100);
-
-                // Auto Forge Vendor Processing Mechanics (In Base Regions)
-                const currentCol = Math.floor((this.x + this.width / 2) / TILE_SIZE);
-                if (this.iron >= 2) {
-                    if ((this.team === 1 && currentCol <= 6) || (this.team === 2 && currentCol >= 23)) {
-                        this.iron -= 2; this.blocks += 6;
-                    }
-                }
-            }
-            collide(vx, vy) {
-                for (let r = 0; r < GRID_HEIGHT; r++) {
-                    for (let c = 0; c < GRID_WIDTH; c++) {
-                        if (grid[r][c] !== BLOCKS.AIR) {
-                            let bx = c * TILE_SIZE, by = r * TILE_SIZE;
-                            if (this.x < bx + TILE_SIZE && this.x + this.width > bx && this.y < by + TILE_SIZE && this.y + this.height > by) {
-                                if (vx > 0) this.x = bx - this.width;
-                                if (vx < 0) this.x = bx + TILE_SIZE;
-                                if (vy > 0) { this.y = by - this.height; this.vy = 0; }
-                                if (vy < 0) { this.y = by + TILE_SIZE; this.vy = 0; }
-                            }
-                        }
-                    }
-                }
-            }
-            takeDamage(amount) {
-                let defFactor = this.armorTier === 1 ? 0.25 : (this.armorTier === 2 ? 0.55 : 0);
-                if (amount < 100) amount = amount * (1 - defFactor);
-                this.hp -= Math.round(amount);
-                if (this.hp <= 0) {
-                    if (isBedAlive(this.team)) { this.reset(); } 
-                    else { this.hp = 0; endGame(this.team === 1 ? 2 : 1); }
-                }
-            }
-            draw() {
-                ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.width, this.height);
-                // Draw eyes following direction
-                ctx.fillStyle = "#fff"; ctx.fillRect(this.x + (this.facingDir === 1 ? this.width - 6 : 2), this.y + 4, 4, 4);
-                // Visual Indicator for Armor Tiers
-                if (this.armorTier === 1) { ctx.strokeStyle = "#aaaaaa"; ctx.lineWidth = 2; ctx.strokeRect(this.x, this.y, this.width, this.height); }
-                if (this.armorTier === 2) { ctx.strokeStyle = "#00e5ff"; ctx.lineWidth = 2; ctx.strokeRect(this.x, this.y, this.width, this.height); }
-            }
-        }
-        function isBedAlive(team) {
-            let b = team === 1 ? BLOCKS.P1_BED : BLOCKS.P2_BED;
-            return grid.some(r => r.includes(b));
-        }
-        function handleInput() {
-            if (gameOver) return;
-            p1.vx = 0;
-            if (keys['a']) { p1.vx = -3; p1.facingDir = -1; }
-            if (keys['d']) { p1.vx = 3; p1.facingDir = 1; }
-            if (keys['w'] && p1.vy === 0) p1.vy = -7.5;
-
-            p2.vx = 0;
-            if (keys['arrowleft']) { p2.vx = -3; p2.facingDir = -1; }
-            if (keys['arrowright']) { p2.vx = 3; p2.facingDir = 1; }
-            if (keys['arrowup'] && p2.vy === 0) p2.vy = -7.5;
-        }
-
-        window.addEventListener("keydown", e => {
-            if (gameOver) return; const k = e.key.toLowerCase();
-            // P1 Commands
-            if (k === 's') tryPlaceBlock(p1, BLOCKS.RED_WOOL);
-            if (k === 'q') tryDeployTNT(p1);
-            if (k === 'f') tryBreakOrAttack(p1, p2);
-            
-            // P2 Commands
-            if (k === 'arrowdown') tryPlaceBlock(p2, BLOCKS.BLUE_WOOL);
-            if (k === 'm') tryDeployTNT(p2);
-            if (k === '/') tryBreakOrAttack(p2, p1);
-        });
-
-        function tryPlaceBlock(player, blockType) {
-            if (player.blocks <= 0) return;
-            let targetCol = Math.floor((player.x + (player.facingDir === 1 ? player.width + 5 : -15)) / TILE_SIZE);
-            let targetRow = Math.floor((player.y + player.height / 2) / TILE_SIZE);
-            if (targetCol >= 0 && targetCol < GRID_WIDTH && targetRow >= 0 && targetRow < GRID_HEIGHT) {
-                if (grid[targetRow][targetCol] === BLOCKS.AIR) { grid[targetRow][targetCol] = blockType; player.blocks--; }
-            }
-        }
-        function tryDeployTNT(player) {
-            if (player.tntCount <= 0) return;
-            let targetCol = Math.floor((player.x + (player.facingDir === 1 ? player.width + 5 : -15)) / TILE_SIZE);
-            let targetRow = Math.floor((player.y + player.height / 2) / TILE_SIZE);
-            if (targetCol >= 0 && targetCol < GRID_WIDTH && targetRow >= 0 && targetRow < GRID_HEIGHT) {
-                if (grid[targetRow][targetCol] === BLOCKS.AIR) {
-                    grid[targetRow][targetCol] = BLOCKS.TNT; player.tntCount--;
-                    setTimeout(() => detonateTNT(targetRow, targetCol), 2000); // 2-second fuse timer
-                }
-            }
-        }
-
-        function detonateTNT(row, col) {
-            if (grid[row][col] !== BLOCKS.TNT) return;
-            grid[row][col] = BLOCKS.AIR;
-            tntExplosions.push({ x: col * TILE_SIZE + 15, y: row * TILE_SIZE + 15, radius: 45, timer: 15 });
-            
-            // Calculate structural environment blast damage
-            let blastRadiusBlocks = 2;
-            for (let r = row - blastRadiusBlocks; r <= row + blastRadiusBlocks; r++) {
-                for (let c = col - blastRadiusBlocks; c <= col + blastRadiusBlocks; c++) {
-                    if (r >= 0 && r < GRID_HEIGHT && c >= 0 && c < GRID_WIDTH) {
-                        let targetBlock = grid[r][c];
-                        // Blow up ONLY user bridges (Red and Blue wool)
-                        if (targetBlock === BLOCKS.RED_WOOL || targetBlock === BLOCKS.BLUE_WOOL) { grid[r][c] = BLOCKS.AIR; }
-                    }
-                }
-            }
-            // Deal damage to nearby players caught in the blast radius
-            let bx = col * TILE_SIZE + 15, by = row * TILE_SIZE + 15;
-            [p1, p2].forEach(p => { if (Math.hypot((p.x + p.width/2) - bx, (p.y + p.height/2) - by) < 70) p.takeDamage(40); });
-        }
-
-        function updateSpawners() {
-            ironSpawnerTimer++; diamondSpawnerTimer++;
-            // Iron Spawning Logic
-            if (ironSpawnerTimer >= 90) {
-                ironSpawnerTimer = 0;
-                for (let r = 0; r < GRID_HEIGHT; r++) {
-                    for (let c = 0; c < GRID_WIDTH; c++) {
-                        if (grid[r][c] === BLOCKS.IRON_GEN) {
-                            let bx = c * TILE_SIZE + 15, by = r * TILE_SIZE + 15;
-                            [p1, p2].forEach(p => { if (Math.hypot((p.x+p.width/2)-bx, (p.y+p.height/2)-by) < TILE_SIZE*2.5) p.iron++; });
-                        }
-                    }
-                }
-            }
-            // Diamond Spawning Logic
-            if (diamondSpawnerTimer >= 220) {
-                diamondSpawnerTimer = 0;
-                for (let r = 0; r < GRID_HEIGHT; r++) {
-                    for (let c = 0; c < GRID_WIDTH; c++) {
-                        if (grid[r][c] === BLOCKS.DIAMOND_GEN) {
-                            let bx = c * TILE_SIZE + 15, by = r * TILE_SIZE + 15;
-                            [p1, p2].forEach(p => { if (Math.hypot((p.x+p.width/2)-bx, (p.y+p.height/2)-by) < TILE_SIZE*2.5) p.diamonds++; });
-                        }
-                    }
-                }
-            }
-        }
-        function tryBreakOrAttack(attacker, opponent) {
-            let targetCol = Math.floor((attacker.x + (attacker.facingDir === 1 ? attacker.width + 12 : -20)) / TILE_SIZE);
-            let targetRow = Math.floor((attacker.y + attacker.height / 2) / TILE_SIZE);
-            let dist = Math.hypot((attacker.x + attacker.width/2) - (opponent.x + opponent.width/2), (attacker.y + attacker.height/2) - (opponent.y + opponent.height/2));
-            
-            if (dist < 45) { 
-                let baseDmg = attacker.swordTier === 0 ? 15 : (attacker.swordTier === 1 ? 30 : 48);
-                opponent.takeDamage(baseDmg); 
-                opponent.vx += attacker.facingDir * (5 + attacker.swordTier * 2); opponent.vy -= 2.5; 
-                return; 
-            }
-            if (targetCol >= 0 && targetCol < GRID_WIDTH && targetRow >= 0 && targetRow < GRID_HEIGHT) {
-                let block = grid[targetRow][targetCol];
-                if (block !== BLOCKS.AIR && block !== BLOCKS.IRON_GEN && block !== BLOCKS.DIAMOND_GEN && block !== BLOCKS.DIRT) {
-                    grid[targetRow][targetCol] = BLOCKS.AIR;
                 }
             }
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let r = 0; r < GRID_HEIGHT; r++) {
-                for (let c = 0; c < GRID_WIDTH; c++) {
-                    let block = grid[r][c];
-                    if (block !== BLOCKS.AIR) {
-                        ctx.fillStyle = COLORS[block]; ctx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                        ctx.strokeStyle = "rgba(0,0,0,0.12)"; ctx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                        if (block === BLOCKS.IRON_GEN) { ctx.fillStyle = "#fff"; ctx.fillRect(c * TILE_SIZE + 10, r * TILE_SIZE + 10, 10, 10); }
-                        if (block === BLOCKS.DIAMOND_GEN) { ctx.fillStyle = "#e5fffa"; ctx.fillRect(c * TILE_SIZE + 8, r * TILE_SIZE + 8, 14, 14); }
-                        if (block === BLOCKS.P1_BED || block === BLOCKS.P2_BED) { ctx.fillStyle = "#fff"; ctx.fillRect(c * TILE_SIZE + 4, r * TILE_SIZE + 16, 22, 8); }
+            for (let r = 0; r < GRID_H; r++) {
+                for (let c = 0; c < GRID_W; c++) {
+                    if (grid[r][c] !== BLOCKS.AIR) {
+                        ctx.fillStyle = COLORS[grid[r][c]]; ctx.fillRect(c * TILE, r * TILE, TILE, TILE);
+                        ctx.strokeStyle = "rgba(0,0,0,0.08)"; ctx.strokeRect(c * TILE, r * TILE, TILE, TILE);
+                        if (grid[r][c] === BLOCKS.P1_BED || grid[r][c] === BLOCKS.P2_BED) { ctx.fillStyle = "#ffffff"; ctx.fillRect(c * TILE + 2, r * TILE + 12, 16, 5); }
                     }
                 }
             }
-            p1.draw(); p2.draw();
-            
-            // Draw explosion rings
-            for (let i = tntExplosions.length - 1; i >= 0; i--) {
-                let exp = tntExplosions[i]; ctx.fillStyle = "rgba(255,100,0,0.4)";
-                ctx.beginPath(); ctx.arc(exp.x, exp.y, exp.radius, 0, Math.PI*2); ctx.fill();
-                exp.timer--; if (exp.timer <= 0) tntExplosions.splice(i, 1);
-            }
-            updateLabels();
+            ctx.fillStyle = p1.color; ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
+            ctx.fillStyle = p2.color; ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
+
+            let b1 = grid.some(r => r.includes(BLOCKS.P1_BED)), b2 = grid.some(r => r.includes(BLOCKS.P2_BED));
+            document.getElementById("p1-hp").innerText = Math.max(0, p1.hp); document.getElementById("p2-hp").innerText = Math.max(0, p2.hp);
+            document.getElementById("p1-bed").innerText = b1 ? "OK" : "DESTROYED"; document.getElementById("p2-bed").innerText = b2 ? "OK" : "DESTROYED";
+            document.getElementById("p1-bl").innerText = p1.blocks; document.getElementById("p2-bl").innerText = p2.blocks;
+            document.getElementById("p1-ir").innerText = p1.iron; document.getElementById("p2-ir").innerText = p2.iron;
+            document.getElementById("p1-sw").innerText = p1.swordTier === 1 ? "Stone" : "Wood"; document.getElementById("p2-sw").innerText = p2.swordTier === 1 ? "Stone" : "Wood";
+            document.getElementById("p1-ar").innerText = p1.armorTier === 1 ? "Chainmail" : "None"; document.getElementById("p2-ar").innerText = p2.armorTier === 1 ? "Chainmail" : "None";
         }
 
-        function updateLabels() {
-            const swords = ["Wood", "Stone (4 Iron)", "Diamond MAX"];
-            const armors = ["None", "Chain (6 Iron)", "Diamond MAX"];
-            
-            document.getElementById("p1-hp").innerText = p1.hp;
-            document.getElementById("p1-bed").innerText = isBedAlive(1) ? "ALIVE" : "DESTROYED";
-            document.getElementById("p1-blocks").innerText = p1.blocks;
-            document.getElementById("p1-iron").innerText = p1.iron;
-            document.getElementById("p1-dia").innerText = p1.diamonds;
-            document.getElementById("p1-tnt").innerText = p1.tntCount;
-            document.getElementById("p1-sword").innerText = swords[p1.swordTier];
-            document.getElementById("p1-armor").innerText = armors[p1.armorTier];
-
-            document.getElementById("p2-hp").innerText = p2.hp;
-            document.getElementById("p2-bed").innerText = isBedAlive(2) ? "ALIVE" : "DESTROYED";
-            document.getElementById("p2-blocks").innerText = p2.blocks;
-            document.getElementById("p2-iron").innerText = p2.iron;
-            document.getElementById("p2-dia").innerText = p2.diamonds;
-            document.getElementById("p2-tnt").innerText = p2.tntCount;
-            document.getElementById("p2-sword").innerText = swords[p2.swordTier];
-            document.getElementById("p2-armor").innerText = armors[p2.armorTier];
-        }
-
-        function buyItem(team, type) {
-            if (gameOver) return; let p = team === 1 ? p1 : p2;
-            if (type === 'sword' && p.iron >= 4 && p.swordTier === 0) { p.iron -= 4; p.swordTier = 1; }
-            if (type === 'armor' && p.iron >= 6 && p.armorTier === 0) { p.iron -= 6; p.armorTier = 1; }
-            if (type === 'tnt' && p.iron >= 3) { p.iron -= 3; p.tntCount++; }
-            if (type === 'd_sword' && p.diamonds >= 2 && p.swordTier === 1) { p.diamonds -= 2; p.swordTier = 2; }
-            if (type === 'd_armor' && p.diamonds >= 3 && p.armorTier === 1) { p.diamonds -= 3; p.armorTier = 2; }
-        }
-
-        function gameLoop() { handleInput(); p1.update(); p2.update(); updateSpawners(); draw(); requestAnimationFrame(gameLoop); }
-        function endGame(w) {
-            gameOver = true; const s = document.getElementById("victory-screen"); const t = document.getElementById("victory-text");
-            t.innerText = w === 1 ? "RED TEAM WINS!" : "BLUE TEAM WINS!"; t.style.color = w === 1 ? "#ff4444" : "#4444ff"; s.style.display = "flex";
-        }
-        function resetGame() { document.getElementById("victory-screen").style.display = "none"; gameOver = false; initGrid(); p1 = new Player(60, 200, "#ff4444", 1); p2 = new Player(820, 200, "#4444ff", 2); }
+        function gameLoop() { updateGame(); draw(); requestAnimationFrame(gameLoop); }
+        function endGame(winnerTeam) { gameOver = true; document.getElementById("victory").style.display = "flex"; document.getElementById("vic-txt").innerText = winnerTeam === 1 ? "RED TEAM WINS!" : "BLUE TEAM WINS!"; document.getElementById("vic-txt").style.color = winnerTeam === 1 ? "#ff3333" : "#3333ff"; }
+        function resetGame() { document.getElementById("victory").style.display = "none"; gameOver = false; initGrid(); p1 = new Player(48, 220, "#ff3333", 1); p2 = new Player(890, 220, "#3333ff", 2); }
+        
         resetGame(); gameLoop();
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D-Style 2D Split-Screen Bed Wars</title>
+    <style>
+        body { margin: 0; background: #111; color: #fff; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; user-select: none; overflow: hidden; }
+        #viewports-container { display: flex; width: 100vw; height: 78vh; background: #222; border-bottom: 4px solid #444; }
+        .view-pane { width: 50%; height: 100%; position: relative; overflow: hidden; }
+        .view-pane:first-child { border-right: 4px solid #333; }
+        canvas { display: block; background: #70b5ff; width: 100%; height: 100%; }
+        .hud-card { position: absolute; top: 12px; background: rgba(15, 15, 15, 0.88); padding: 10px; border-radius: 6px; font-size: 13px; border: 2px solid #555; line-height: 1.4; width: 210px; pointer-events: none; z-index: 5; }
+        #p1-hud { left: 12px; border-left: 6px solid #ff3333; }
+        #p2-hud { right: 12px; border-right: 6px solid #3333ff; text-align: right; }
+        .shop-tip { margin-top: 4px; font-size: 11px; color: #ffd700; font-weight: bold; text-align: left; }
+        #p2-hud .shop-tip { text-align: right; }
+        #victory { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); flex-direction: column; justify-content: center; align-items: center; font-size: 46px; font-weight: bold; z-index: 100; }
+        #restart { background: #28a745; color: #fff; border: none; padding: 12px 24px; font-size: 18px; cursor: pointer; border-radius: 5px; margin-top: 20px; font-family: inherit; font-weight: bold; }
+        #footer-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 20vh; background: #161616; padding: 10px; display: flex; justify-content: space-around; align-items: center; font-size: 13px; font-weight: bold; box-sizing: border-box; }
+        .key-badge { background: #3a3a3a; padding: 2px 6px; border-radius: 4px; border: 1px solid #666; color: #fff; }
+    </style>
+</head>
 <body>
-    <h2 style="margin: 5px 0 0 0;">MINECRAFT BED WARS (2-PLAYER)</h2>
-    <div id="game-container">
-        <canvas id="gameCanvas" width="900" height="450"></canvas>
-        <div id="ui-overlay">
-            <!-- Red Player Column Interface -->
-            <div class="player-card p1-card">
-                <strong style="color:#ff4444;">RED (P1)</strong><br>
-                HP: <span id="p1-hp">100</span>% | Bed: <span id="p1-bed">ALIVE</span><br>
-                Blocks: <span id="p1-blocks">15</span> | Iron: <span id="p1-iron">0</span> | Diamonds: <span id="p1-dia" style="color:#00e5ff;">0</span><br>
-                TNT Count: <span id="p1-tnt" style="color:#ff3333;">0</span>
-                <div class="tier-indicator">Wpn: <span id="p1-sword">Wood</span> | Arm: <span id="p1-armor">None</span></div>
-                <div class="shop-container">
-                    <button class="shop-btn" onclick="buyItem(1, 'sword')">+Stn Wpn</button>
-                    <button class="shop-btn" onclick="buyItem(1, 'armor')">+Chain</button>
-                    <button class="shop-btn" onclick="buyItem(1, 'tnt')" style="color:#ff5555;">Buy TNT (3 Iron)</button>
-                </div>
-                <div class="shop-container" style="margin-top:2px;">
-                    <button class="shop-btn" onclick="buyItem(1, 'd_sword')" style="border-color:#00e5ff;">+Dia Wpn (2 Dia)</button>
-                    <button class="shop-btn" onclick="buyItem(1, 'd_armor')" style="border-color:#00e5ff;">+Dia Arm (3 Dia)</button>
-                </div>
+    <div id="viewports-container">
+        <!-- PLAYER 1 VIEWPORT PANEL -->
+        <div class="view-pane">
+            <div id="p1-hud" class="hud-card">
+                <b style="color:#ff3333;">RED (P1) PERSPECTIVE</b><br>
+                HP: <span id="p1-hp">100</span>% | Bed: <span id="p1-bed">OK</span><br>
+                Blocks: <span id="p1-bl">30</span> | Iron: <span id="p1-ir">0</span><br>
+                Sword: <span id="p1-sw">Wood</span> | Armor: <span id="p1-ar">None</span>
+                <div class="shop-tip">SHOP: [1] Stone Sword(4) | [2] Chainmail(6)</div>
             </div>
-            <!-- Blue Player Column Interface -->
-            <div class="player-card p2-card">
-                <strong style="color:#4444ff;">BLUE (P2)</strong><br>
-                HP: <span id="p2-hp">100</span>% | Bed: <span id="p2-bed">ALIVE</span><br>
-                Blocks: <span id="p2-blocks">15</span> | Iron: <span id="p2-iron">0</span> | Diamonds: <span id="p2-dia" style="color:#00e5ff;">0</span><br>
-                TNT Count: <span id="p2-tnt" style="color:#ff3333;">0</span>
-                <div class="tier-indicator">Wpn: <span id="p2-sword">Wood</span> | Arm: <span id="p2-armor">None</span></div>
-                <div class="shop-container">
-                    <button class="shop-btn" onclick="buyItem(2, 'sword')">+Stn Wpn</button>
-                    <button class="shop-btn" onclick="buyItem(2, 'armor')">+Chain</button>
-                    <button class="shop-btn" onclick="buyItem(2, 'tnt')" style="color:#ff5555;">Buy TNT (3 Iron)</button>
-                </div>
-                <div class="shop-container" style="margin-top:2px;">
-                    <button class="shop-btn" onclick="buyItem(2, 'd_sword')" style="border-color:#00e5ff;">+Dia Wpn (2 Dia)</button>
-                    <button class="shop-btn" onclick="buyItem(2, 'd_armor')" style="border-color:#00e5ff;">+Dia Arm (3 Dia)</button>
-                </div>
-            </div>
+            <canvas id="canvasP1"></canvas>
         </div>
-        <div id="victory-screen">
-            <div id="victory-text">RED WINS!</div>
-            <button id="restart-btn" onclick="resetGame()">Play Again</button>
+        <!-- PLAYER 2 VIEWPORT PANEL -->
+        <div class="view-pane">
+            <div id="p2-hud" class="hud-card">
+                <b style="color:#3333ff;">BLUE (P2) PERSPECTIVE</b><br>
+                HP: <span id="p2-hp">100</span>% | Bed: <span id="p2-bed">OK</span><br>
+                Blocks: <span id="p2-bl">30</span> | Iron: <span id="p2-ir">0</span><br>
+                Sword: <span id="p2-sw">Wood</span> | Armor: <span id="p2-ar">None</span>
+                <div class="shop-tip">SHOP: [B] Stone Sword(4) | [N] Chainmail(6)</div>
+            </div>
+            <canvas id="canvasP2"></canvas>
         </div>
     </div>
-    <div id="instructions">
-        <div><strong style="color:#ff4444;">P1 (Red):</strong> Walk: <span class="key">A</span>/<span class="key">D</span> | Jump: <span class="key">W</span> | Build: <span class="key">S</span> | Place TNT: <span class="key">Q</span> | Attack: <span class="key">F</span></div>
-        <div><strong style="color:#4444ff;">P2 (Blue):</strong> Walk: <span class="key">←</span>/<span class="key">→</span> | Jump: <span class="key">↑</span> | Build: <span class="key">↓</span> | Place TNT: <span class="key">M</span> | Attack: <span class="key">/</span></div>
+
+    <div id="victory">
+        <div id="vic-txt"></div>
+        <button id="restart" onclick="resetGame()">PLAY AGAIN</button>
     </div>
-        #scoreboard {
-            position: absolute; top: 140px; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.75); border: 2px solid #555; padding: 10px;
-            border-radius: 6px; width: 220px; font-family: monospace; font-size: 13px;
+
+    <!-- BOTTOM INSTRUCTIONS BAR -->
+    <div id="footer-bar">
+        <div><b style="color:#ff3333;">RED (P1):</b> Move: <span class="key-badge">A</span>/<span class="key-badge">D</span> | Jump: <span class="key-badge">W</span> | <span style="color:#ffd700;">Block Under:</span> <span class="key-badge">S</span> | Attack: <span class="key-badge">F</span></div>
+        <div style="color: #ffd700; text-align: center; max-width: 30%;">🌟 MASSIVE SPLIT-SCREEN MAP 🌟<br>Bridges can span across deep space divides. Protect your bed block!</div>
+        <div><b style="color:#3333ff;">BLUE (P2):</b> Move: <span class="key-badge">←</span>/<span class="key-badge">→</span> | Jump: <span class="key-badge">↑</span> | <span style="color:#ffd700;">Block Under:</span> <span class="key-badge">↓</span> | Attack: <span class="key-badge">/</span></div>
+    </div>
+    <script>
+        const c1 = document.getElementById("canvasP1"); const ctx1 = c1.getContext("2d");
+        const c2 = document.getElementById("canvasP2"); const ctx2 = c2.getContext("2d");
+        
+        const TILE = 26, GRAVITY = 0.38;
+        // Massive Arena Map Bounds Setup
+        const GRID_W = 100, GRID_H = 30; 
+        const WORLD_WIDTH = GRID_W * TILE, WORLD_HEIGHT = GRID_H * TILE;
+
+        const BLOCKS = { AIR: 0, STONE: 1, FORGE: 2, P1_BED: 3, P2_BED: 4, RED_WOOL: 5, BLUE_WOOL: 6 };
+        const COLORS = { 0: "transparent", 1: "#5c5c5c", 2: "#ffd700", 3: "#d32f2f", 4: "#1976d2", 5: "#ff6666", 6: "#6666ff" };
+
+        let grid = [], p1, p2, forgeTimer = 0, gameOver = false;
+        const keys = {};
+
+        function resizeCanvases() {
+            c1.width = c1.parentElement.clientWidth; c1.height = c1.parentElement.clientHeight;
+            c2.width = c2.parentElement.clientWidth; c2.height = c2.parentElement.clientHeight;
         }
-        .sb-title { text-align: center; color: #ffd700; font-weight: bold; margin-bottom: 5px; }
-        .sb-row { display: flex; justify-content: space-between; margin: 3px 0; }
-        <!-- Automated Match Scoreboard Tracking System -->
-        <div id="scoreboard">
-            <div class="sb-title">== MATCH STATS ==</div>
-            <div class="sb-row" style="color:#ff4444;"><span>RED Kills:</span> <span id="sb-p1-kills">0</span></div>
-            <div class="sb-row" style="color:#ff4444;"><span>RED Beds Broken:</span> <span id="sb-p1-beds">0</span></div>
-            <div class="sb-row" style="color:#4444ff;"><span>BLUE Kills:</span> <span id="sb-p2-kills">0</span></div>
-            <div class="sb-row" style="color:#4444ff;"><span>BLUE Beds Broken:</span> <span id="sb-p2-beds">0</span></div>
-        </div>
-        // Permanent match session score tracking counters
-        let scores = { p1Kills: 0, p1Beds: 0, p2Kills: 0, p2Beds: 0 };
-            takeDamage(amount, attackerTeam) {
-                let defFactor = this.armorTier === 1 ? 0.25 : (this.armorTier === 2 ? 0.55 : 0);
-                if (amount < 100) amount = amount * (1 - defFactor);
-                this.hp -= Math.round(amount);
-                
-                if (this.hp <= 0) {
-                    this.hp = 0;
-                    // Log kill stat to the opposing team
-                    if (attackerTeam === 1) scores.p1Kills++;
-                    if (attackerTeam === 2) scores.p2Kills++;
-                    
-                    if (isBedAlive(this.team)) { 
-                        this.reset(); 
-                    } else { 
-                        endGame(this.team === 1 ? 2 : 1); 
+        window.addEventListener("resize", resizeCanvases);
+
+        window.addEventListener("keydown", e => {
+            const k = e.key.toLowerCase(); keys[k] = true;
+            if (!gameOver) {
+                if (k === '1') buyItem(1, 'sword'); if (k === '2') buyItem(1, 'armor');
+                if (k === 'b') buyItem(2, 'sword'); if (k === 'n') buyItem(2, 'armor');
+                if (k === 's') placeUnderFeet(p1, BLOCKS.RED_WOOL);
+                if (k === 'f') performAction(p1, p2);
+                if (k === 'arrowdown') placeUnderFeet(p2, BLOCKS.BLUE_WOOL);
+                if (k === '/') performAction(p2, p1);
+            }
+        });
+        window.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
+
+        function initGrid() {
+            grid = [];
+            for (let r = 0; r < GRID_H; r++) {
+                grid[r] = new Array(GRID_W).fill(BLOCKS.AIR);
+            }
+            // Generate a massive map spanning 100 blocks wide
+            for (let c = 0; c < GRID_W; c++) {
+                // Red Side Base (Left)
+                if (c >= 2 && c <= 12 && rBetween(18, 20)) fillBlockRow(c, 18, 20, BLOCKS.STONE);
+                // Blue Side Base (Right)
+                if (c >= 87 && c <= 97 && rBetween(18, 20)) fillBlockRow(c, 18, 20, BLOCKS.STONE);
+                // Left Outer Diamond Forge Platform
+                if (c >= 25 && c <= 30 && rBetween(15, 16)) fillBlockRow(c, 15, 16, BLOCKS.STONE);
+                // Right Outer Diamond Forge Platform
+                if (c >= 70 && c <= 75 && rBetween(15, 16)) fillBlockRow(c, 15, 16, BLOCKS.STONE);
+                // Mega Central Base Platform
+                if (c >= 44 && c <= 56 && rBetween(22, 24)) fillBlockRow(c, 22, 24, BLOCKS.STONE);
+            }
+            // Inject spawners & team bed objects cleanly
+            grid[17][4] = BLOCKS.P1_BED; grid[17][95] = BLOCKS.P2_BED;
+            grid[17][7] = BLOCKS.FORGE;  grid[17][92] = BLOCKS.FORGE; // Base Generators
+            grid[14][27] = BLOCKS.FORGE; grid[14][72] = BLOCKS.FORGE; // Side Generators
+            grid[21][50] = BLOCKS.FORGE; // Mega Center Forge
+        }
+        function rBetween(low, high) { return true; }
+        function fillBlockRow(c, start, end, type) { for(let r=start; r<=end; r++) grid[r][c] = type; }
+        class Player {
+            constructor(x, y, color, team) {
+                this.spawnX = x; this.spawnY = y; this.x = x; this.y = y;
+                this.vx = 0; this.vy = 0; this.w = 18; this.h = 28;
+                this.color = color; this.team = team; this.hp = 100;
+                this.blocks = 30; this.iron = 0; this.swordTier = 0; this.armorTier = 0;
+            }
+            reset() { this.x = this.spawnX; this.y = this.spawnY; this.vx = 0; this.vy = 0; this.hp = 100; }
+            update() {
+                this.vy += GRAVITY; this.x += this.vx; this.collide(this.vx, 0); this.y += this.vy; this.collide(0, this.vy);
+                if (this.y > WORLD_HEIGHT) this.respawnOrDie();
+                let currentCc = Math.floor((this.x + this.w / 2) / TILE);
+                if (this.iron >= 2) {
+                    if ((this.team === 1 && currentCc <= 14) || (this.team === 2 && currentCc >= 85)) { this.iron -= 2; this.blocks += 6; }
+                }
+            }
+            collide(vx, vy) {
+                let startR = Math.max(0, Math.floor((this.y-10)/TILE)), endR = Math.min(GRID_H-1, Math.ceil((this.y+this.h+10)/TILE));
+                let startC = Math.max(0, Math.floor((this.x-10)/TILE)), endC = Math.min(GRID_W-1, Math.ceil((this.x+this.w+10)/TILE));
+                for (let r = startR; r <= endR; r++) {
+                    for (let c = startC; c <= endC; c++) {
+                        if (grid[r][c] !== BLOCKS.AIR) {
+                            let bx = c * TILE, by = r * TILE;
+                            if (this.x < bx + TILE && this.x + this.w > bx && this.y < by + TILE && this.y + this.h > by) {
+                                if (vx > 0) this.x = bx - this.w; if (vx < 0) this.x = bx + TILE;
+                                if (vy > 0) { this.y = by - this.h; this.vy = 0; } if (vy < 0) { this.y = by + TILE; this.vy = 0; }
+                            }
+                        }
                     }
                 }
             }
-            // Deal damage to nearby players caught in the blast radius
-            let bx = col * TILE_SIZE + 15, by = row * TILE_SIZE + 15;
-            [p1, p2].forEach(p => { 
-                if (Math.hypot((p.x + p.width/2) - bx, (p.y + p.height/2) - by) < 70) {
-                    p.takeDamage(40, p.team === 1 ? 2 : 1); // Credit damage to enemy player
-                }
-            });
-                if (block !== BLOCKS.AIR && block !== BLOCKS.IRON_GEN && block !== BLOCKS.DIAMOND_GEN && block !== BLOCKS.DIRT) {
-                    if (block === BLOCKS.P2_BED && attacker.team === 1) scores.p1Beds++;
-                    if (block === BLOCKS.P1_BED && attacker.team === 2) scores.p2Beds++;
-                    grid[targetRow][targetCol] = BLOCKS.AIR;
-                }
-            document.getElementById("sb-p1-kills").innerText = scores.p1Kills;
-            document.getElementById("sb-p1-beds").innerText = scores.p1Beds;
-            document.getElementById("sb-p2-kills").innerText = scores.p2Kills;
-            document.getElementById("sb-p2-beds").innerText = scores.p2Beds;
-        function tryPlaceBlock(player, blockType) {
-    if (player.blocks <= 0) return;
-    // Calculate grid coordinates directly below the player's center feet
-    let targetCol = Math.floor((player.x + player.width / 2) / TILE_SIZE);
-    let targetRow = Math.floor((player.y + player.height + 2) / TILE_SIZE);
-    
-    if (targetCol >= 0 && targetCol < GRID_WIDTH && targetRow >= 0 && targetRow < GRID_HEIGHT) {
-        if (grid[targetRow][targetCol] === BLOCKS.AIR) { 
-            grid[targetRow][targetCol] = blockType; 
-            player.blocks--; 
+            respawnOrDie() {
+                let targetBed = this.team === 1 ? BLOCKS.P1_BED : BLOCKS.P2_BED;
+                if (grid.some(row => row.includes(targetBed))) { this.reset(); } 
+                else { this.hp = 0; endGame(this.team === 1 ? 2 : 1); }
+            }
         }
-    }
-}
-function buyItem(team, type) {
-    if (gameOver) return; 
-    let p = team === 1 ? p1 : p2;
-    
-    if (type === 'sword' && p.iron >= 4 && p.swordTier === 0) { 
-        p.iron -= 4; 
-        p.swordTier = 1; 
-    }
-    if (type === 'armor' && p.iron >= 6 && p.armorTier === 0) { 
-        p.iron -= 6; 
-        p.armorTier = 1; 
-    }
-    if (type === 'tnt' && p.iron >= 3) { 
-        p.iron -= 3; 
-        p.tntCount++; 
-    }
-    if (type === 'd_sword' && p.diamonds >= 2 && p.swordTier === 1) { 
-        p.diamonds -= 2; 
-        p.swordTier = 2; 
-    }
-    if (type === 'd_armor' && p.diamonds >= 3 && p.armorTier === 1) { 
-        p.diamonds -= 3; 
-        p.armorTier = 2; 
-    }
-    updateLabels(); // Forces the HUD display text to update immediately
-}
-<div id="instructions" style="display: none;"></div>
-            // Close the Game Engine Loop safely
-        console.log("Bed Wars Engine successfully initialized.");
+
+        function handleMovement() {
+            if (gameOver) return;
+            p1.vx = keys['a'] ? -3.4 : (keys['d'] ? 3.4 : 0); if (keys['w'] && p1.vy === 0) p1.vy = -7.5;
+            p2.vx = keys['arrowleft'] ? -3.4 : (keys['arrowright'] ? 3.4 : 0); if (keys['arrowup'] && p2.vy === 0) p2.vy = -7.5;
+        }
+
+        function placeUnderFeet(p, blockType) {
+            if (p.blocks <= 0) return;
+            let c = Math.floor((p.x + p.w / 2) / TILE), r = Math.floor((p.y + p.h + 1) / TILE);
+            if (c >= 0 && c < GRID_W && r >= 0 && r < GRID_H && grid[r][c] === BLOCKS.AIR) { grid[r][c] = blockType; p.blocks--; }
+        }
+
+        function performAction(attacker, opponent) {
+            let distance = Math.hypot((attacker.x + attacker.w/2) - (opponent.x + opponent.w/2), (attacker.y + attacker.h/2) - (opponent.y + opponent.h/2));
+            if (distance < 45) {
+                let damageAmount = attacker.swordTier === 0 ? 15 : 32, absorption = opponent.armorTier === 1 ? 0.35 : 0;
+                opponent.hp -= Math.round(damageAmount * (1 - absorption));
+                opponent.vx += (attacker.x < opponent.x ? 1 : -1) * 6; opponent.vy -= 2.2;
+                if (opponent.hp <= 0) opponent.respawnOrDie(); return;
+            }
+            let sideCol = Math.floor((attacker.x + (attacker.vx >= 0 ? attacker.w + 12 : -12)) / TILE), sideRow = Math.floor((attacker.y + attacker.h / 2) / TILE);
+            if (sideCol >= 0 && sideCol < GRID_W && sideRow >= 0 && sideRow < GRID_H) {
+                let tb = grid[sideRow][sideCol]; if (tb !== BLOCKS.AIR && tb !== BLOCKS.STONE && tb !== BLOCKS.FORGE) grid[sideRow][sideCol] = BLOCKS.AIR;
+            }
+        }
+
+        function buyItem(team, itemType) {
+            let p = team === 1 ? p1 : p2;
+            if (itemType === 'sword' && p.iron >= 4 && p.swordTier === 0) { p.iron -= 4; p.swordTier = 1; }
+            if (itemType === 'armor' && p.iron >= 6 && p.armorTier === 0) { p.iron -= 6; p.armorTier = 1; }
+        }
+
+        function drawScene(ctx, canvas, activePlayer) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Camera Interpolation Perspective Math
+            let camX = activePlayer.x + activePlayer.w / 2 - canvas.width / 2;
+            let camY = activePlayer.y + activePlayer.h / 2 - canvas.height / 2;
+            camX = Math.max(0, Math.min(camX, WORLD_WIDTH - canvas.width));
+            camY = Math.max(0, Math.min(camY, WORLD_HEIGHT - canvas.height));
+
+            ctx.save(); ctx.translate(-camX, -camY);
+            for (let r = 0; r < GRID_H; r++) {
+                for (let c = 0; c < GRID_W; c++) {
+                    if (grid[r][c] !== BLOCKS.AIR) {
+                        ctx.fillStyle = COLORS[grid[r][c]]; ctx.fillRect(c * TILE, r * TILE, TILE, TILE);
+                        ctx.strokeStyle = "rgba(0,0,0,0.06)"; ctx.strokeRect(c * TILE, r * TILE, TILE, TILE);
+                        if (grid[r][c] === BLOCKS.P1_BED || grid[r][c] === BLOCKS.P2_BED) { ctx.fillStyle = "#ffffff"; ctx.fillRect(c * TILE + 2, r * TILE + 12, 16, 5); }
+                    }
+                }
+            }
+            ctx.fillStyle = p1.color; ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
+            ctx.fillStyle = p2.color; ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
+            ctx.restore();
+        }
+
+        function updateGame() {
+            handleMovement(); p1.update(); p2.update(); forgeTimer++;
+            if (forgeTimer >= 70) {
+                forgeTimer = 0;
+                for (let r = 0; r < GRID_H; r++) {
+                    for (let c = 0; c < GRID_W; c++) {
+                        if (grid[r][c] === BLOCKS.FORGE) {
+                            let bx = c * TILE + TILE/2, by = r * TILE + TILE/2;
+                            [p1, p2].forEach(p => { if (Math.hypot((p.x+p.w/2)-bx, (p.y+p.h/2)-by) < TILE * 3.5) p.iron++; });
+                        }
+                    }
+                }
+            }
+        }
+
+        function draw() {
+            drawScene(ctx1, c1, p1); drawScene(ctx2, c2, p2);
+            let b1 = grid.some(r => r.includes(BLOCKS.P1_BED)), b2 = grid.some(r => r.includes(BLOCKS.P2_BED));
+            document.getElementById("p1-hp").innerText = Math.max(0, p1.hp); document.getElementById("p2-hp").innerText = Math.max(0, p2.hp);
+            document.getElementById("p1-bed").innerText = b1 ? "OK" : "BRKN"; document.getElementById("p2-bed").innerText = b2 ? "OK" : "BRKN";
+            document.getElementById("p1-bl").innerText = p1.blocks; document.getElementById("p2-bl").innerText = p2.blocks;
+            document.getElementById("p1-ir").innerText = p1.iron; document.getElementById("p2-ir").innerText = p2.iron;
+            document.getElementById("p1-sw").innerText = p1.swordTier === 1 ? "Stone" : "Wood"; document.getElementById("p2-sw").innerText = p2.swordTier === 1 ? "Stone" : "Wood";
+            document.getElementById("p1-ar").innerText = p1.armorTier === 1 ? "Chain" : "None"; document.getElementById("p2-ar").innerText = p2.armorTier === 1 ? "Chain" : "None";
+        }
+
+        function gameLoop() { updateGame(); draw(); requestAnimationFrame(gameLoop); }
+        function endGame(w) { gameOver = true; document.getElementById("victory").style.display = "flex"; document.getElementById("vic-txt").innerText = w === 1 ? "RED TEAM WINS!" : "BLUE TEAM WINS!"; document.getElementById("vic-txt").style.color = w === 1 ? "#ff3333" : "#3333ff"; }
+        function resetGame() { document.getElementById("victory").style.display = "none"; gameOver = false; resizeCanvases(); initGrid(); p1 = new Player(100, 400, "#ff3333", 1); p2 = new Player(2400, 400, "#3333ff", 2); }
+        
+        resetGame(); gameLoop();
+    </script>
+</body>
+</html>
+        // Safely close and lock the Split-Screen Game Loop
+        console.log("Minecraft Bed Wars engine fully running.");
     </script>
 </body>
 </html>
