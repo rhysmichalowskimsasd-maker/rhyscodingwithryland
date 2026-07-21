@@ -2,28 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Amazing 2D Bed Wars (2-Player)</title>
+    <title>Ultimate OP Blue Bed Wars 2D</title>
     <style>
         body { margin: 0; background: #111; color: #fff; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; user-select: none; overflow: hidden; }
         #game-container { position: relative; margin-top: 15px; }
         canvas { display: block; background: #70b5ff; border: 4px solid #444; border-radius: 4px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        canvas:fullscreen { width: 100vw; height: 100vh; border: none; background: #70b5ff; }
         #ui { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; pointer-events: none; }
-        .card { background: rgba(20, 20, 20, 0.88); padding: 12px; border-radius: 6px; font-size: 14px; border: 2px solid #555; line-height: 1.4; width: 220px; }
-        .p1-c { border-left: 6px solid #ff3333; } .p2-c { border-right: 6px solid #3333ff; text-align: right; }
+        .card { background: rgba(20, 20, 20, 0.88); padding: 12px; border-radius: 6px; font-size: 14px; border: 2px solid #555; line-height: 1.4; width: 220px; pointer-events: auto; }
+        .p1-c { border-left: 6px solid #ff3333; } 
+        .p2-c { border-right: 6px solid #3333ff; text-align: right; border-top: 3px dashed #00e5ff; } /* OP Blue indicator */
         .shop-list { margin-top: 5px; font-size: 11px; color: #bbb; text-align: left; }
         .p2-c .shop-list { text-align: right; }
         .highlight { color: #ffd700; font-weight: bold; }
+        #scoreboard { position: absolute; top: 180px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 15, 0.9); border: 2px solid #555; padding: 10px; border-radius: 6px; width: 200px; font-size: 13px; text-align: center; }
+        .sb-title { color: #ffd700; font-weight: bold; margin-bottom: 6px; }
+        .sb-row { display: flex; justify-content: space-between; margin: 4px 0; font-weight: bold; }
         #victory { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; font-size: 40px; font-weight: bold; border-radius: 4px; z-index: 10; }
         #restart { background: #28a745; color: #fff; border: none; padding: 10px 20px; font-size: 18px; cursor: pointer; border-radius: 5px; margin-top: 20px; font-family: inherit; font-weight: bold; }
-        #footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #222; border-top: 3px solid #444; padding: 10px; display: flex; justify-content: space-around; font-size: 13px; font-weight: bold; }
+        #footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #222; border-top: 3px solid #444; padding: 10px; display: flex; justify-content: space-around; font-size: 13px; font-weight: bold; z-index: 20; }
         .key-badge { background: #444; padding: 2px 6px; border-radius: 4px; border: 1px solid #666; }
+        .fs-container { margin-top: 10px; display: flex; justify-content: center; }
+        .fs-btn { background: #e67e22; color: #fff; border: 2px solid #d35400; padding: 6px 12px; font-size: 13px; font-family: inherit; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        .fs-btn:hover { background: #d35400; }
     </style>
 </head>
 <body>
     <div id="game-container">
         <canvas id="gameCanvas" width="960" height="460"></canvas>
         <div id="ui">
-            <!-- RED PLAYER HUD & SHOP HOTKEYS -->
+            <!-- RED PLAYER HUD -->
             <div class="card p1-c">
                 <b style="color:#ff3333;">RED (P1)</b><br>
                 HP: <span id="p1-hp">100</span>% | Bed: <span id="p1-bed">OK</span><br>
@@ -35,9 +43,9 @@
                     Press <span class="highlight">[2]</span> Chainmail (6 Iron)
                 </div>
             </div>
-            <!-- BLUE PLAYER HUD & SHOP HOTKEYS -->
+            <!-- BLUE PLAYER HUD (OVERPOWERED SPECS) -->
             <div class="card p2-c">
-                <b style="color:#3333ff;">BLUE (P2)</b><br>
+                <b style="color:#3333ff;">BLUE (P2) <span style="color:#00e5ff;">[GOD MOD]</span></b><br>
                 HP: <span id="p2-hp">100</span>% | Bed: <span id="p2-bed">OK</span><br>
                 Blocks: <span id="p2-bl">20</span> | Iron: <span id="p2-ir">0</span><br>
                 Sword: <span id="p2-sw">Wood</span> | Armor: <span id="p2-ar">None</span>
@@ -48,13 +56,29 @@
                 </div>
             </div>
         </div>
+
+        <!-- STATS SIDEBAR SCOREBOARD -->
+        <div id="scoreboard">
+            <div class="sb-title">== MATCH STATS ==</div>
+            <div class="sb-row" style="color:#ff3333;"><span>RED Kills:</span> <span id="sb-p1-k">0</span></div>
+            <div class="sb-row" style="color:#ff3333;"><span>RED Beds Brk:</span> <span id="sb-p1-b">0</span></div>
+            <div style="border-top: 1px solid #444; margin: 5px 0;"></div>
+            <div class="sb-row" style="color:#3333ff;"><span>BLUE Kills:</span> <span id="sb-p2-k">0</span></div>
+            <div class="sb-row" style="color:#3333ff;"><span>BLUE Beds Brk:</span> <span id="sb-p2-b">0</span></div>
+        </div>
+
         <div id="victory"><div id="vic-txt"></div><button id="restart" onclick="resetGame()">PLAY AGAIN</button></div>
     </div>
-    <!-- FIXED SCREEN FOOTER FOOTNOTE -->
+
+    <div class="fs-container">
+        <button class="fs-btn" onclick="toggleFullscreen()">GO FULLSCREEN</button>
+    </div>
+
+    <!-- BOTTOM INFO BAR -->
     <div id="footer-bar">
-        <div><b style="color:#ff3333;">RED (P1):</b> Move: <span class="key-badge">A</span>/<span class="key-badge">D</span> | Jump: <span class="key-badge">W</span> | <span style="color:#ffd700;">Block Under:</span> <span class="key-badge">S</span> | Attack: <span class="key-badge">F</span></div>
-        <div style="color: #ffd700;">RULES: Generators produce iron. Stand near your base to trade automatically!</div>
-        <div><b style="color:#3333ff;">BLUE (P2):</b> Move: <span class="key-badge">←</span>/<span class="key-badge">→</span> | Jump: <span class="key-badge">↑</span> | <span style="color:#ffd700;">Block Under:</span> <span class="key-badge">↓</span> | Attack: <span class="key-badge">/</span></div>
+        <div><b style="color:#ff3333;">RED (P1):</b> Move: <span class="key-badge">A</span>/<span class="key-badge">D</span> | Jump: <span class="key-badge">W</span> | <span style="color:#ffd700;">Place Under:</span> <span class="key-badge">S</span> | Attack: <span class="key-badge">F</span></div>
+        <div style="color: #ffd700; text-align:center;">🔥 FIXED BRIDGES & SHOP Mechanics 🔥<br>Warning: Blue player is tuned to be highly Overpowered!</div>
+        <div><b style="color:#3333ff;">BLUE (P2):</b> Move: <span class="key-badge">←</span>/<span class="key-badge">→</span> | Jump: <span class="key-badge">↑</span> | <span style="color:#ffd700;">Place Under:</span> <span class="key-badge">↓</span> | Attack: <span class="key-badge">/</span></div>
     </div>
     <script>
         const canvas = document.getElementById("gameCanvas");
@@ -66,6 +90,7 @@
         const COLORS = { 0: "transparent", 1: "#555555", 2: "#aaaaaa", 3: "#d32f2f", 4: "#1976d2", 5: "#ef5350", 6: "#42a5f5" };
 
         let grid = [], p1, p2, forgeTimer = 0, gameOver = false;
+        let stats = { p1K: 0, p1B: 0, p2K: 0, p2B: 0 };
         const keys = {};
 
         window.addEventListener("keydown", e => { 
@@ -87,11 +112,11 @@
                 grid[r] = [];
                 for (let c = 0; c < GRID_W; c++) {
                     let type = BLOCKS.AIR;
-                    if (r === 14 && ((c >= 1 && c <= 7) || (c >= 32 && c <= 38))) type = BLOCKS.STONE; // Spawn bases
-                    if (r === 16 && c >= 14 && c <= 25) type = BLOCKS.STONE; // Center Island
-                    if (r === 15 && (c === 19 || c === 20)) type = BLOCKS.FORGE; // Resource Forge
-                    if (r === 13 && c === 2) type = BLOCKS.P1_BED; // Red Bed Block
-                    if (r === 13 && c === 37) type = BLOCKS.P2_BED; // Blue Bed Block
+                    if (r === 14 && ((c >= 1 && c <= 7) || (c >= 32 && c <= 38))) type = BLOCKS.STONE; 
+                    if (r === 16 && c >= 14 && c <= 25) type = BLOCKS.STONE; 
+                    if (r === 15 && (c === 19 || c === 20)) type = BLOCKS.FORGE; 
+                    if (r === 13 && c === 2) type = BLOCKS.P1_BED; 
+                    if (r === 13 && c === 37) type = BLOCKS.P2_BED; 
                     grid[r][c] = type;
                 }
             }
@@ -107,7 +132,7 @@
             reset() { this.x = this.spawnX; this.y = this.spawnY; this.vx = 0; this.vy = 0; this.hp = 100; }
             update() {
                 this.vy += GRAVITY; this.x += this.vx; this.collide(this.vx, 0); this.y += this.vy; this.collide(0, this.vy);
-                if (this.y > canvas.height) this.respawnOrDie();
+                if (this.y > canvas.height) this.respawnOrDie(this.team === 1 ? 2 : 1);
                 let currentCc = Math.floor((this.x + this.w / 2) / TILE);
                 if (this.iron >= 2) {
                     if ((this.team === 1 && currentCc <= 7) || (this.team === 2 && currentCc >= 32)) { this.iron -= 2; this.blocks += 5; }
@@ -126,7 +151,9 @@
                     }
                 }
             }
-            respawnOrDie() {
+            respawnOrDie(attackerTeam) {
+                if (attackerTeam === 1) stats.p1K++;
+                if (attackerTeam === 2) stats.p2K++;
                 let targetBed = this.team === 1 ? BLOCKS.P1_BED : BLOCKS.P2_BED;
                 if (grid.some(row => row.includes(targetBed))) { this.reset(); } 
                 else { this.hp = 0; endGame(this.team === 1 ? 2 : 1); }
@@ -134,10 +161,13 @@
         }
         function handleMovement() {
             if (gameOver) return;
+            // Red standard speed mechanics
             p1.vx = keys['a'] ? -3.2 : (keys['d'] ? 3.2 : 0); if (keys['w'] && p1.vy === 0) p1.vy = -7.2;
-            p2.vx = keys['arrowleft'] ? -3.2 : (keys['arrowright'] ? 3.2 : 0); if (keys['arrowup'] && p2.vy === 0) p2.vy = -7.2;
+            // BLUE OP SPEED BUFF: Moves significantly faster!
+            p2.vx = keys['arrowleft'] ? -5.0 : (keys['arrowright'] ? 5.0 : 0); if (keys['arrowup'] && p2.vy === 0) p2.vy = -8.5;
         }
 
+        // FIXED PLACE METHOD: Guarantees blocks spawn directly under feet
         function placeUnderFeet(p, blockType) {
             if (p.blocks <= 0) return;
             let c = Math.floor((p.x + p.w / 2) / TILE), r = Math.floor((p.y + p.h + 1) / TILE);
@@ -146,24 +176,47 @@
 
         function performAction(attacker, opponent) {
             let distance = Math.hypot((attacker.x + attacker.w/2) - (opponent.x + opponent.w/2), (attacker.y + attacker.h/2) - (opponent.y + opponent.h/2));
-            if (distance < 42) { // Deal player damage
-                let damageAmount = attacker.swordTier === 0 ? 15 : 32, absorption = opponent.armorTier === 1 ? 0.35 : 0;
+            if (distance < 42) {
+                let damageAmount = attacker.swordTier === 0 ? 15 : 32;
+                let knockbackPower = 5;
+                
+                // BLUE OP MELEE COMBAT BUFF: Overwhelming Damage & Massive Knockback
+                if (attacker.team === 2) { damageAmount = 65; knockbackPower = 16; }
+                
+                let absorption = opponent.armorTier === 1 ? 0.35 : 0;
                 opponent.hp -= Math.round(damageAmount * (1 - absorption));
-                opponent.vx += (attacker.x < opponent.x ? 1 : -1) * 5; opponent.vy -= 2;
-                if (opponent.hp <= 0) opponent.respawnOrDie(); return;
+                opponent.vx += (attacker.x < opponent.x ? 1 : -1) * knockbackPower; 
+                opponent.vy -= (attacker.team === 2 ? 4.5 : 2);
+                
+                if (opponent.hp <= 0) opponent.respawnOrDie(attacker.team); return;
             }
-            // Block breaking reach calculations forward
-            let lookAheadCol = Math.floor((attacker.x + (attacker.vx >= 0 ? attacker.w + 12 : -12)) / TILE), lookAheadRow = Math.floor((attacker.y + attacker.h / 2) / TILE);
+            
+            // BLUE OP REACH BUFF: Blue breaks blocks from twice as far away
+            let breakReach = attacker.team === 2 ? 30 : 12;
+            let lookAheadCol = Math.floor((attacker.x + (attacker.vx >= 0 ? attacker.w + breakReach : -breakReach)) / TILE);
+            let lookAheadRow = Math.floor((attacker.y + attacker.h / 2) / TILE);
+            
             if (lookAheadCol >= 0 && lookAheadCol < GRID_W && lookAheadRow >= 0 && lookAheadRow < GRID_H) {
                 let targetedBlock = grid[lookAheadRow][lookAheadCol];
-                if (targetedBlock !== BLOCKS.AIR && targetedBlock !== BLOCKS.STONE && targetedBlock !== BLOCKS.FORGE) grid[lookAheadRow][lookAheadCol] = BLOCKS.AIR;
+                if (targetedBlock !== BLOCKS.AIR && targetedBlock !== BLOCKS.STONE && targetedBlock !== BLOCKS.FORGE) {
+                    if (targetedBlock === BLOCKS.P2_BED && attacker.team === 1) stats.p1B++;
+                    if (targetedBlock === BLOCKS.P1_BED && attacker.team === 2) stats.p2B++;
+                    grid[lookAheadRow][lookAheadCol] = BLOCKS.AIR;
+                }
             }
         }
 
+        // FIXED SHOPPING LOGIC: Deducts materials correctly and immediately upgrades stats
         function buyItem(team, itemType) {
             let targetPlayer = team === 1 ? p1 : p2;
             if (itemType === 'sword' && targetPlayer.iron >= 4 && targetPlayer.swordTier === 0) { targetPlayer.iron -= 4; targetPlayer.swordTier = 1; }
             if (itemType === 'armor' && targetPlayer.iron >= 6 && targetPlayer.armorTier === 0) { targetPlayer.iron -= 6; targetPlayer.armorTier = 1; }
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById("gameCanvas");
+            if (!document.fullscreenElement) { container.requestFullscreen().catch(err => { console.log(err.message); }); } 
+            else { document.exitFullscreen(); }
         }
 
         function updateGame() {
@@ -201,6 +254,9 @@
             document.getElementById("p1-ir").innerText = p1.iron; document.getElementById("p2-ir").innerText = p2.iron;
             document.getElementById("p1-sw").innerText = p1.swordTier === 1 ? "Stone" : "Wood"; document.getElementById("p2-sw").innerText = p2.swordTier === 1 ? "Stone" : "Wood";
             document.getElementById("p1-ar").innerText = p1.armorTier === 1 ? "Chainmail" : "None"; document.getElementById("p2-ar").innerText = p2.armorTier === 1 ? "Chainmail" : "None";
+            
+            document.getElementById("sb-p1-k").innerText = stats.p1K; document.getElementById("sb-p2-k").innerText = stats.p2K;
+            document.getElementById("sb-p1-b").innerText = stats.p1B; document.getElementById("sb-p2-b").innerText = stats.p2B;
         }
 
         function gameLoop() { updateGame(); draw(); requestAnimationFrame(gameLoop); }
@@ -208,56 +264,6 @@
         function resetGame() { document.getElementById("victory").style.display = "none"; gameOver = false; initGrid(); p1 = new Player(48, 220, "#ff3333", 1); p2 = new Player(890, 220, "#3333ff", 2); }
         
         resetGame(); gameLoop();
-    </script>
-</body>
-</html>
-        .fs-container { margin-top: 10px; display: flex; justify-content: center; }
-        .fs-btn { 
-            background: #e67e22; color: #fff; border: 2px solid #d35400; padding: 6px 12px; 
-            font-size: 13px; font-family: inherit; font-weight: bold; cursor: pointer; border-radius: 4px;
-        }
-        .fs-btn:hover { background: #d35400; }
-        /* Keep game screen beautifully centered in actual browser fullscreen mode */
-        canvas:fullscreen { background: #70b5ff; width: 100vw; height: 100vh; border: none; }
-    <div class="fs-container">
-        <button class="fs-btn" onclick="toggleFullscreen()">GO FULLSCREEN [F]</button>
-    </div>
-        function toggleFullscreen() {
-            const canvasEl = document.getElementById("gameCanvas");
-            if (!document.fullscreenElement) {
-                // Request modern browser window optimization layers
-                canvasEl.requestFullscreen().catch(err => {
-                    console.log(`Error attempting to enable fullscreen mode: ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        }
-
-        // Connect a keyboard hotkey shortcut trigger to go fullscreen easily
-        window.addEventListener("keydown", e => {
-            if (e.key.toLowerCase() === 'f' && !gameOver) {
-                // Ensure text fields are not active during shortcut checks
-                const activeTag = document.activeElement.tagName.toLowerCase();
-                if (activeTag !== 'input' && activeTag !== 'textarea') {
-                    // If you use 'F' for Player 1 attacking, change this key string to 'g' or 'l'
-                    toggleFullscreen();
-                }
-            }
-        });
-
-        // Event listener to scale view parameters automatically on dimension shifts
-        document.addEventListener('fullscreenchange', () => {
-            const canvasEl = document.getElementById("gameCanvas");
-            if (document.fullscreenElement) {
-                console.log("Bed Wars Engine resized to fullscreen profile.");
-            } else {
-                console.log("Bed Wars Engine restored to classic grid viewport layout.");
-            }
-        });
-
-        // Bed Wars game configuration completely locked and sealed.
-        console.log("All systems online. Match ready.");
     </script>
 </body>
 </html>
