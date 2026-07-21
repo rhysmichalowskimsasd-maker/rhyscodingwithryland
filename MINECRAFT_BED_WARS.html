@@ -262,7 +262,38 @@
         function gameLoop() { updateGame(); draw(); requestAnimationFrame(gameLoop); }
         function endGame(winnerTeam) { gameOver = true; document.getElementById("victory").style.display = "flex"; document.getElementById("vic-txt").innerText = winnerTeam === 1 ? "RED TEAM WINS!" : "BLUE TEAM WINS!"; document.getElementById("vic-txt").style.color = winnerTeam === 1 ? "#ff3333" : "#3333ff"; }
         function resetGame() { document.getElementById("victory").style.display = "none"; gameOver = false; initGrid(); p1 = new Player(48, 220, "#ff3333", 1); p2 = new Player(890, 220, "#3333ff", 2); }
+        window.addEventListener("keydown", e => { 
+    // FIXED: Using e.key directly preserves uppercase/lowercase variations safely
+    const k = e.key.toLowerCase(); 
+    keys[k] = true; 
+    
+    if (!gameOver) {
+        // Red (P1) Keyboard Hotkey Shop
+        if (k === '1') buyItem(1, 'sword'); 
+        if (k === '2') buyItem(1, 'armor');
         
+        // Blue (P2) Keyboard Hotkey Shop
+        if (k === 'b') buyItem(2, 'sword'); 
+        if (k === 'n') buyItem(2, 'armor');
+        
+        // RED BRIDGE FIX: Separated key checks to prevent overlap bugs
+        if (e.key === 's' || e.key === 'S') {
+            placeUnderFeet(p1, BLOCKS.RED_WOOL);
+        }
+        if (e.key === 'f' || e.key === 'F') {
+            performAction(p1, p2);
+        }
+        
+        // Blue Actions Tracking
+        if (e.key === 'ArrowDown') {
+            placeUnderFeet(p2, BLOCKS.BLUE_WOOL);
+        }
+        if (e.key === '/') {
+            performAction(p2, p1);
+        }
+    }
+});
+
         resetGame(); gameLoop();
     </script>
 </body>
