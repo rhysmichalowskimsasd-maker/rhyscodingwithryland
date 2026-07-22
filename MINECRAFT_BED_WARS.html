@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bed Wars 2D - Ultimate Showdown</title>
+    <title>Bed Wars 2D - Ultimate 2-Player Showdown</title>
     <style>
         body {
             margin: 0;
@@ -118,7 +118,7 @@
             5: "#22c55e"  // Green Bed Object Block
         };
 
-        // Create the world map grid correctly
+        // Create empty world matrix grid correctly
         const world = [];
         for (let r = 0; r < WORLD_ROWS; r++) {
             world[r] = [];
@@ -127,17 +127,17 @@
             }
         }
 
-        // Build base islands (Rows 12 to 15)
+        // Build base rocks (Rows 12 to 15)
         for (let r = 12; r <= 15; r++) {
             for (let c = 1; c <= 5; c++) world[r][c] = 1; 
             for (let c = 26; c <= 30; c++) world[r][c] = 1; 
         }
 
-        // Safe direct matrix row/column injection for beds
+        // Safe index array writing for beds (On row 11)
         world[11][2] = 4;  // Red Bed
         world[11][29] = 5; // Green Bed
 
-        // Set up resource generator arrays
+        // Set up spawner generator arrays
         const generators = [
             { x: 3 * BLOCK_SIZE, y: 11 * BLOCK_SIZE, type: 'iron', timer: 0, interval: 40 },
             { x: 28 * BLOCK_SIZE, y: 11 * BLOCK_SIZE, type: 'iron', timer: 0, interval: 40 },
@@ -146,24 +146,24 @@
         world[13][15] = 1; // Middle diamond platform blocks
         world[13][16] = 1;
 
-        // Player starting variables with safe height spawn locations
+        // Player configurations with adjusted spawning anchors
         const p1 = {
             id: 1, color: "#38bdf8", weaponColor: "#cbd5e1",
-            x: 96, y: 100, width: 22, height: 42, vx: 0, vy: 0,
+            x: 128, y: 250, width: 22, height: 42, vx: 0, vy: 0,
             speed: 4.2, gravity: 0.38, jumpForce: -9, grounded: false,
             bedAlive: true, kills: 0, iron: 0, swordLevel: 1, swordName: "Wood",
             isAttacking: false, attackTimer: 0, facingDir: 1,
-            spawnX: 96, spawnY: 100, blockType: 2, hudIron: document.getElementById("p1Iron"),
+            spawnX: 128, spawnY: 250, blockType: 2, hudIron: document.getElementById("p1Iron"),
             hudSword: document.getElementById("p1Sword"), hudBed: document.getElementById("p1Bed"), hudKills: document.getElementById("p1Kills")
         };
 
         const p2 = {
             id: 2, color: "#4ade80", weaponColor: "#cbd5e1",
-            x: 864, y: 100, width: 22, height: 42, vx: 0, vy: 0,
+            x: 864, y: 250, width: 22, height: 42, vx: 0, vy: 0,
             speed: 4.2, gravity: 0.38, jumpForce: -9, grounded: false,
             bedAlive: true, kills: 0, iron: 0, swordLevel: 1, swordName: "Wood",
             isAttacking: false, attackTimer: 0, facingDir: -1,
-            spawnX: 864, spawnY: 100, blockType: 3, hudIron: document.getElementById("p2Iron"),
+            spawnX: 864, spawnY: 250, blockType: 3, hudIron: document.getElementById("p2Iron"),
             hudSword: document.getElementById("p2Sword"), hudBed: document.getElementById("p2Bed"), hudKills: document.getElementById("p2Kills")
         };
 
@@ -206,7 +206,7 @@
             if (p1.isAttacking) { p1.attackTimer--; if(p1.attackTimer <= 0) p1.isAttacking = false; }
             if (p2.isAttacking) { p2.attackTimer--; if(p2.attackTimer <= 0) p2.isAttacking = false; }
 
-            // Weapon Combat Hitbox Intersections
+            // P1 Combat Hitbox Checks
             if (p1.isAttacking && p1.attackTimer === 8) {
                 let swordX = p1.facingDir === 1 ? p1.x + p1.width : p1.x - 24;
                 if (swordX + 24 > p2.x && swordX < p2.x + p2.width && p1.y + p1.height > p2.y && p1.y < p2.y + p2.height) {
@@ -215,6 +215,7 @@
                 }
             }
 
+            // P2 Combat Hitbox Checks
             if (p2.isAttacking && p2.attackTimer === 8) {
                 let swordX = p2.facingDir === 1 ? p2.x + p2.width : p2.x - 24;
                 if (swordX + 24 > p1.x && swordX < p1.x + p1.width && p2.y + p2.height > p1.y && p2.y < p1.y + p1.height) {
@@ -223,7 +224,7 @@
                 }
             }
 
-            // Real-Time Grid Checking for Bed Breaking
+            // Bed Destruction Scanning
             let p1C = Math.floor((p1.x + p1.width/2) / BLOCK_SIZE);
             let p1R = Math.floor((p1.y + p1.height/2) / BLOCK_SIZE);
             if (p1R >= 0 && p1R < WORLD_ROWS && p1C >= 0 && p1C < WORLD_COLS && world[p1R][p1C] === 5) {
@@ -239,7 +240,7 @@
         function killPlayer(victim, attacker) {
             if (attacker) { attacker.kills++; attacker.hudKills.textContent = attacker.kills; }
             if (!victim.bedAlive) {
-                alert(`👑 MATCH OVER! Player ${victim.id === 1 ? '2 (Green)' : '1 (Blue)'} wins the match!`);
+                alert(`👑 MATCH OVER! Player ${victim.id === 1 ? '2 (Green)' : '1 (Blue)'} wins!`);
                 location.reload();
             } else {
                 victim.x = victim.spawnX; victim.y = victim.spawnY; victim.vx = 0; victim.vy = 0;
@@ -309,7 +310,7 @@
                 });
             });
 
-            // Map Renderer Matrix loops
+            // Map Drawing Loops
             for (let r = 0; r < WORLD_ROWS; r++) {
                 for (let c = 0; c < WORLD_COLS; c++) {
                     const type = world[r][c];
@@ -322,12 +323,12 @@
                 }
             }
 
-            // Draw Player 1 & Slash Effect Arc
+            // Draw Player 1 & Slash Effect
             ctx.fillStyle = p1.color; ctx.fillRect(p1.x, p1.y, p1.width, p1.height);
             ctx.fillStyle = p1.weaponColor; ctx.fillRect(p1.x + (p1.facingDir === 1 ? p1.width : -8), p1.y + 16, 8, 4);
             if (p1.isAttacking) { ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.fillRect(p1.facingDir === 1 ? p1.x + p1.width : p1.x - 16, p1.y + 10, 16, 22); }
 
-            // Draw Player 2 & Slash Effect Arc
+            // Draw Player 2 & Slash Effect
             ctx.fillStyle = p2.color; ctx.fillRect(p2.x, p2.y, p2.width, p2.height);
             ctx.fillStyle = p2.weaponColor; ctx.fillRect(p2.x + (p2.facingDir === 1 ? p2.width : -8), p2.y + 16, 8, 4);
             if (p2.isAttacking) { ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.fillRect(p2.facingDir === 1 ? p2.x + p2.width : p2.x - 16, p2.y + 10, 16, 22); }
