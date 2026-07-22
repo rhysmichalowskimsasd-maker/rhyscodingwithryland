@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Road 2D Prototype</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #1a1a1a;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            user-select: none;
+        }
+        #game-container {
+            position: relative;
+            box-shadow: 0px 15px 50px rgba(0,0,0,0.7);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background-color: #3e3e3e; /* Asphalt road color */
+        }
+        #hud {
+            position: absolute;
+            top: 15px; left: 15px; right: 15px;
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+        #heat-panel { color: #e74c3c; }
+        #game-over-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        #game-over-screen h1 { color: #e74c3c; margin-bottom: 5px; font-size: 40px; }
+        #game-over-screen p { font-size: 18px; margin-bottom: 20px; }
+        #restart-btn {
+            background: #2ecc71; border: none; color: white;
+            padding: 12px 24px; font-size: 16px; font-weight: bold;
+            border-radius: 5px; cursor: pointer; transition: transform 0.1s;
+        }
+        #restart-btn:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="hud">
+            <div>CASH: $<span id="scoreVal">0</span></div>
+            <div id="heat-panel">WANTED LEVEL: <span id="heatVal">1</span> ★</div>
+        </div>
+
+        <div id="game-over-screen">
+            <h1>BUSTED!</h1>
+            <p>You crashed or were caught by the police.</p>
+            <p>Final Score: $<span id="finalScore">0</span></p>
+            <button id="restart-btn" onclick="resetGame()">PLAY AGAIN</button>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const gameOverScreen = document.getElementById("game-over-screen");
+
+        // Engine State Configs
+        let score = 0;
+        let heatLevel = 1;
+        let isGameOver = false;
+        let gameFrame = 0;
+
+        // Player Car Initialization
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height - 120,
+            width: 24,
+            height: 44,
+            angle: 0, 
+            speed: 5,
+            turnSpeed: 0.05,
+            vx: 0, vy: 0
+        };
+
+        let policeCars = [];
+        let obstacles = [];
+        let moneyItems = [];
+
+        const keys = {};
+        window.addEventListener("keydown", e => keys[e.code] = true);
+        window.addEventListener("keyup", e => keys[e.code] = false);
+
+        // Enemy Police Cruiser Generator
+        function spawnPolice() {
+            let spawnSide = Math.floor(Math.random() * 3); 
+            let sx, sy;
+
+            if (spawnSide === 0) { sx = -40; sy = Math.random() * canvas.height; } 
+            else if (spawnSide === 1) { sx = Math.random() * canvas.width; sy = -40; } 
+            else { sx = canvas.width + 40; sy = Math.random() * canvas.height; } 
+
+            policeCars.push({
+                x: sx, y: sy,
+                width: 24, height: 44,
+                speed: 3.5 + (heatLevel * 0.3), 
+                angle: 0
+            });
+        }
+
+        function spawnObstacle() {
+            obstacles.push({
+                x: Math.random() * (canvas.width - 60) + 30,
+                y: -50,
+                size: Math.random() * 20 + 20,
+                speed: player.speed 
+            });
+        }
+
+        function spawnMoney() {
+            moneyItems.push({
+                x: Math.random() * (canvas.width - 60) + 30,
+                y: -50,
+                radius: 10,
+                speed: player.speed
+            });
+        }
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+
+        function triggerGameOver() {
+            isGameOver = true;
+            document.getElementById("finalScore").textContent = score;
+            gameOverScreen.style.display = "flex";
+        }
+
+        function resetGame() {
+            score = 0;
+            heatLevel = 1;
+            isGameOver = false;
+            gameFrame = 0;
+            policeCars = [];
+            obstacles = [];
+            moneyItems = [];
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 120;
+            player.angle = 0;
+            document.getElementById("scoreVal").textContent = score;
+            document.getElementById("heatVal").textContent = heatLevel;
+            gameOverScreen.style.display = "none";
+            gameLoop();
+        }
+        function gameLoop() {}
+            if (isGameOver) return;
+            gameFrame++;
+
+            // Steering calculations
+            if (keys["KeyA"] || keys["ArrowLeft"]) player.angle -= player.turnSpeed;
+            if (keys["KeyD"] || keys["ArrowRight"]) player.angle += player.turnSpeed;
+
+            if (player.angle < -Math.PI / 3) player.angle = -Math.PI / 3;
+            if (player.angle > Math.PI / 3) player.angle = Math.PI / 3;
+
+            player.vx = Math.sin(player.angle) * player.speed;
+            player.x += player.vx;
+
+            // Auto-centering decay physics
+            if (!(keys["KeyA"] || keys["ArrowLeft"] || keys["KeyD"] || keys["ArrowRight"])) {
+                player.angle *= 0.92;
+            }
+
+            // Screen edge crash validation check
+            if (player.x < 10 || player.x > canvas.width - player.width - 10) {
+                triggerGameOver();
+            }
+
+            // Ticking Spawner Schedule Timers
+            if (gameFrame % 100 === 0) spawnObstacle();
+            if (gameFrame % 120 === 0) spawnMoney();
+            
+            let copSpawnRate = Math.max(80, 200 - (heatLevel * 25));
+            if (gameFrame % Math.floor(copSpawnRate) === 0) spawnPolice();
+
+            if (gameFrame % 800 === 0 && heatLevel < 5) {
+                heatLevel++;
+                document.getElementById("heatVal").textContent = heatLevel;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw scrolling road lane textures
+            ctx.fillStyle = "rgba(255,255,255,0.4)";
+            let lineOffset = (gameFrame * player.speed) % 80;
+            for (let y = -80 + lineOffset; y < canvas.height; y += 80) {
+                ctx.fillRect(canvas.width / 2 - 4, y, 8, 40);
+            }
+            // Render and process obstacles
+            ctx.fillStyle = "#7f8c8d"; 
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                obs.y += obs.speed;
+                
+                ctx.beginPath();
+                ctx.arc(obs.x, obs.y, obs.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                let fakePlayerBox = { x: player.x, y: player.y, width: player.width, height: player.height };
+                let fakeObsBox = { x: obs.x - obs.size/2, y: obs.y - obs.size/2, width: obs.size, height: obs.size };
+                if (checkCollision(fakePlayerBox, fakeObsBox)) triggerGameOver();
+
+                if (obs.y > canvas.height + 50) obstacles.splice(i, 1);
+            }
+
+            // Render and process cash loot
+            ctx.fillStyle = "#f1c40f"; 
+            for (let i = moneyItems.length - 1; i >= 0; i--) {
+                let mon = moneyItems[i];
+                mon.y += mon.speed;
+
+                ctx.beginPath();
+                ctx.arc(mon.x, mon.y, mon.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                let fakePlayerBox = { x: player.x, y: player.y, width: player.width, height: player.height };
+                let fakeMonBox = { x: mon.x - mon.radius, y: mon.y - mon.radius, width: mon.radius*2, height: mon.radius*2 };
+                if (checkCollision(fakePlayerBox, fakeMonBox)) {
+                    score += 100;
+                    document.getElementById("scoreVal").textContent = score;
+                    moneyItems.splice(i, 1);
+                    continue;
+                }
+
+                if (mon.y > canvas.height + 50) moneyItems.splice(i, 1);
+            }
+
+            // AI tracking calculations for police cars
+            for (let i = policeCars.length - 1; i >= 0; i--) {
+                let cop = policeCars[i];
+
+                let dx = player.x - cop.x;
+                let dy = player.y - cop.y;
+                cop.angle = Math.atan2(dy, dx);
+
+                cop.x += Math.cos(cop.angle) * cop.speed;
+                cop.y += Math.sin(cop.angle) * cop.speed;
+
+                ctx.save();
+                ctx.translate(cop.x + cop.width/2, cop.y + cop.height/2);
+                ctx.rotate(cop.angle - Math.PI / 2);
+
+                ctx.fillStyle = "#2c3e50"; 
+                ctx.fillRect(-cop.width/2, -cop.height/2, cop.width, cop.height);
+
+                ctx.fillStyle = (gameFrame % 14 < 7) ? "#ef4444" : "#3b82f6";
+                ctx.fillRect(-cop.width/2 + 2, -4, cop.width - 4, 6);
+
+                ctx.restore();
+
+                let fakePlayerBox = { x: player.x, y: player.y, width: player.width, height: player.height };
+                if (checkCollision(fakePlayerBox, cop)) triggerGameOver();
+            }
+            // Render Player Escaping Vehicle
+            ctx.save();
+            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+            ctx.rotate(player.angle);
+
+            ctx.fillStyle = "#e67e22"; // Muscle car color
+            ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
+
+            ctx.fillStyle = "#2c3e50"; // Windows
+            ctx.fillRect(-player.width / 2 + 3, -12, player.width - 6, 14);
+
+            ctx.restore();
+
+            requestAnimationFrame(gameLoop);
+        {}
+
+        // Initialize Launch Instance
+        gameLoop();
+    </script>
+</body>
+</html>
