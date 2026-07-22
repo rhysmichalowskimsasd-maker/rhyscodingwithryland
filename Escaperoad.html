@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escape Road 2D Prototype</title>
+    <title>Escape Road 2D - Pro Edition</title>
     <style>
         body {
             margin: 0;
-            background-color: #1a1a1a;
+            background-color: #0b0e14;
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -18,13 +18,13 @@
         }
         #game-container {
             position: relative;
-            box-shadow: 0px 15px 50px rgba(0,0,0,0.7);
+            box-shadow: 0px 15px 50px rgba(0,0,0,0.8);
             border-radius: 8px;
             overflow: hidden;
         }
         canvas {
             display: block;
-            background-color: #3e3e3e; /* Asphalt road color */
+            background-color: #242526; /* Dark asphalt */
         }
         #hud {
             position: absolute;
@@ -32,28 +32,50 @@
             display: flex;
             justify-content: space-between;
             color: white;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
             pointer-events: none;
         }
-        #heat-panel { color: #e74c3c; }
+        #heat-panel { color: #f87171; text-align: right; }
+        
+        /* Nitro UI Overlay Bar */
+        #nitro-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 14px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid #475569;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #nitro-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #38bdf8, #0284c7);
+            transition: width 0.05s linear;
+        }
+
         #game-over-screen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
+            background: rgba(15, 23, 42, 0.9);
             display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             color: white;
         }
-        #game-over-screen h1 { color: #e74c3c; margin-bottom: 5px; font-size: 40px; }
-        #game-over-screen p { font-size: 18px; margin-bottom: 20px; }
+        #game-over-screen h1 { color: #ef4444; margin-bottom: 5px; font-size: 42px; letter-spacing: 1px; }
+        #game-over-screen p { font-size: 18px; margin-bottom: 20px; color: #94a3b8; }
         #restart-btn {
-            background: #2ecc71; border: none; color: white;
-            padding: 12px 24px; font-size: 16px; font-weight: bold;
-            border-radius: 5px; cursor: pointer; transition: transform 0.1s;
+            background: #22c55e; border: none; color: white;
+            padding: 12px 30px; font-size: 16px; font-weight: bold;
+            border-radius: 6px; cursor: pointer; transition: transform 0.1s;
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
         }
         #restart-btn:hover { transform: scale(1.05); }
     </style>
@@ -62,15 +84,20 @@
 
     <div id="game-container">
         <div id="hud">
-            <div>CASH: $<span id="scoreVal">0</span></div>
-            <div id="heat-panel">WANTED LEVEL: <span id="heatVal">1</span> ★</div>
+            <div>💵 CASH: $<span id="scoreVal">0</span></div>
+            <div id="heat-panel">🔥 WANTED LEVEL: <span id="heatVal">1</span> ★</div>
+        </div>
+
+        <!-- Nitro Indicator -->
+        <div id="nitro-container">
+            <div id="nitro-bar"></div>
         </div>
 
         <div id="game-over-screen">
             <h1>BUSTED!</h1>
-            <p>You crashed or were caught by the police.</p>
-            <p>Final Score: $<span id="finalScore">0</span></p>
-            <button id="restart-btn" onclick="resetGame()">PLAY AGAIN</button>
+            <p>You crashed or were cornered by police cruisers.</p>
+            <p>Total Stolen Cash: <span style="color: #eab308; font-weight: bold;">$<span id="finalScore">0</span></span></p>
+            <button id="restart-btn" onclick="resetGame()">ESCAPE AGAIN</button>
         </div>
 
         <canvas id="gameCanvas" width="800" height="600"></canvas>
@@ -79,67 +106,82 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const gameOverScreen = document.getElementById("game-over-screen");
+        const nitroBar = document.getElementById("nitro-bar");
 
-        // Engine State Configs
         let score = 0;
         let heatLevel = 1;
         let isGameOver = false;
         let gameFrame = 0;
 
-        // Player Car Initialization
+        // Upgraded Player Car Object
         const player = {
             x: canvas.width / 2,
             y: canvas.height - 120,
             width: 24,
             height: 44,
             angle: 0, 
-            speed: 5,
-            turnSpeed: 0.05,
-            vx: 0, vy: 0
+            baseSpeed: 4.8,
+            speed: 4.8,
+            turnSpeed: 0.052,
+            vx: 0,
+            nitro: 100 
         };
 
         let policeCars = [];
         let obstacles = [];
         let moneyItems = [];
+        let explosions = []; 
 
         const keys = {};
         window.addEventListener("keydown", e => { keys[e.code] = true; });
         window.addEventListener("keyup", e => { keys[e.code] = false; });
 
-        // Enemy Police Cruiser Generator
         function spawnPolice() {
             let spawnSide = Math.floor(Math.random() * 3); 
             let sx, sy;
 
-            if (spawnSide === 0) { sx = -40; sy = Math.random() * canvas.height; } 
+            if (spawnSide === 0) { sx = -40; sy = Math.random() * (canvas.height / 2); } 
             else if (spawnSide === 1) { sx = Math.random() * canvas.width; sy = -40; } 
-            else { sx = canvas.width + 40; sy = Math.random() * canvas.height; } 
+            else { sx = canvas.width + 40; sy = Math.random() * (canvas.height / 2); } 
 
             policeCars.push({
                 x: sx, y: sy,
                 width: 24, height: 44,
-                speed: 3.5 + (heatLevel * 0.3), 
+                speed: 4.0 + (heatLevel * 0.4), 
                 angle: 0
             });
         }
 
         function spawnObstacle() {
             obstacles.push({
-                x: Math.random() * (canvas.width - 60) + 30,
-                y: -50,
-                size: Math.random() * 20 + 20,
-                speed: player.speed 
+                x: Math.random() * (canvas.width - 100) + 50,
+                y: -60,
+                size: Math.random() * 25 + 25,
+                speed: player.speed
             });
         }
 
         function spawnMoney() {
             moneyItems.push({
-                x: Math.random() * (canvas.width - 60) + 30,
-                y: -50,
+                x: Math.random() * (canvas.width - 100) + 50,
+                y: -40,
                 radius: 10,
                 speed: player.speed
             });
         }
+        function makeExplosion(x, y) {
+            for (let i = 0; i < 12; i++) {
+                explosions.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    radius: Math.random() * 4 + 4,
+                    life: 25,
+                    color: Math.random() > 0.5 ? "#f97316" : "#ef4444"
+                });
+            }
+        }
+
         function checkCollision(rect1, rect2) {
             return rect1.x < rect2.x + rect2.width &&
                    rect1.x + rect1.width > rect2.x &&
@@ -154,16 +196,10 @@
         }
 
         function resetGame() {
-            score = 0;
-            heatLevel = 1;
-            isGameOver = false;
-            gameFrame = 0;
-            policeCars = [];
-            obstacles = [];
-            moneyItems = [];
-            player.x = canvas.width / 2;
-            player.y = canvas.height - 120;
-            player.angle = 0;
+            score = 0; heatLevel = 1; isGameOver = false; gameFrame = 0;
+            policeCars = []; obstacles = []; moneyItems = []; explosions = [];
+            player.x = canvas.width / 2; player.y = canvas.height - 120;
+            player.angle = 0; player.nitro = 100;
             document.getElementById("scoreVal").textContent = score;
             document.getElementById("heatVal").textContent = heatLevel;
             gameOverScreen.style.display = "none";
@@ -173,86 +209,98 @@
             if (isGameOver) return;
             gameFrame++;
 
-            // Steering calculations
+            // NITRO BOOST LOGIC (Hold Space to outrun them temporarily)
+            if (keys["Space"] && player.nitro > 0) {
+                player.speed = player.baseSpeed * 1.6; 
+                player.nitro -= 0.6; 
+                if (gameFrame % 3 === 0) {
+                    explosions.push({
+                        x: player.x + player.width/2, y: player.y + player.height,
+                        vx: (Math.random() - 0.5) * 2, vy: player.speed * 0.5,
+                        radius: 5, life: 15, color: "rgba(56, 189, 248, 0.5)"
+                    });
+                }
+            } else {
+                player.speed = player.baseSpeed;
+                if (player.nitro < 100) player.nitro += 0.15; 
+            }
+            nitroBar.style.width = player.nitro + "%";
+
+            // Steering Angle
             if (keys["KeyA"] || keys["ArrowLeft"]) player.angle -= player.turnSpeed;
             if (keys["KeyD"] || keys["ArrowRight"]) player.angle += player.turnSpeed;
 
-            if (player.angle < -Math.PI / 3) player.angle = -Math.PI / 3;
-            if (player.angle > Math.PI / 3) player.angle = Math.PI / 3;
+            if (player.angle < -Math.PI / 3.5) player.angle = -Math.PI / 3.5;
+            if (player.angle > Math.PI / 3.5) player.angle = Math.PI / 3.5;
 
             player.vx = Math.sin(player.angle) * player.speed;
             player.x += player.vx;
 
-            // Auto-centering decay physics
             if (!(keys["KeyA"] || keys["ArrowLeft"] || keys["KeyD"] || keys["ArrowRight"])) {
-                player.angle *= 0.92;
+                player.angle *= 0.90; 
             }
 
-            // Screen edge crash validation check
-            if (player.x < 10 || player.x > canvas.width - player.width - 10) {
+            // Screen Side Barriers
+            if (player.x < 15 || player.x > canvas.width - player.width - 15) {
                 triggerGameOver();
             }
 
-            // Ticking Spawner Schedule Timers
-            if (gameFrame % 100 === 0) spawnObstacle();
-            if (gameFrame % 120 === 0) spawnMoney();
+            // Spawning Clocks
+            if (gameFrame % 90 === 0) spawnObstacle();
+            if (gameFrame % 110 === 0) spawnMoney();
             
-            let copSpawnRate = Math.max(80, 200 - (heatLevel * 25));
+            let copSpawnRate = Math.max(70, 180 - (heatLevel * 25));
             if (gameFrame % Math.floor(copSpawnRate) === 0) spawnPolice();
 
-            if (gameFrame % 800 === 0 && heatLevel < 5) {
+            if (gameFrame % 750 === 0 && heatLevel < 5) {
                 heatLevel++;
                 document.getElementById("heatVal").textContent = heatLevel;
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw scrolling road lane textures
-            ctx.fillStyle = "rgba(255,255,255,0.4)";
+            // Draw scrolling highway paint marks
+            ctx.fillStyle = "rgba(255,255,255,0.25)";
             let lineOffset = (gameFrame * player.speed) % 80;
             for (let y = -80 + lineOffset; y < canvas.height; y += 80) {
                 ctx.fillRect(canvas.width / 2 - 4, y, 8, 40);
             }
-            // Render and process obstacles
-            ctx.fillStyle = "#7f8c8d"; 
+            // UPDATE & DRAW OBSTACLES (ROCKS)
+            ctx.fillStyle = "#475569"; 
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let obs = obstacles[i];
-                obs.y += obs.speed;
+                obs.y += player.speed; 
                 
-                ctx.beginPath();
-                ctx.arc(obs.x, obs.y, obs.size / 2, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(obs.x, obs.y, obs.size / 2, 0, Math.PI * 2); ctx.fill();
 
                 let fakePlayerBox = { x: player.x, y: player.y, width: player.width, height: player.height };
                 let fakeObsBox = { x: obs.x - obs.size/2, y: obs.y - obs.size/2, width: obs.size, height: obs.size };
                 if (checkCollision(fakePlayerBox, fakeObsBox)) triggerGameOver();
 
-                if (obs.y > canvas.height + 50) obstacles.splice(i, 1);
+                if (obs.y > canvas.height + 60) obstacles.splice(i, 1);
             }
 
-            // Render and process cash loot
-            ctx.fillStyle = "#f1c40f"; 
+            // UPDATE & DRAW CASH LOOT
+            ctx.fillStyle = "#eab308"; 
             for (let i = moneyItems.length - 1; i >= 0; i--) {
                 let mon = moneyItems[i];
-                mon.y += mon.speed;
+                mon.y += player.speed;
 
-                ctx.beginPath();
-                ctx.arc(mon.x, mon.y, mon.radius, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(mon.x, mon.y, mon.radius, 0, Math.PI * 2); ctx.fill();
 
                 let fakePlayerBox = { x: player.x, y: player.y, width: player.width, height: player.height };
                 let fakeMonBox = { x: mon.x - mon.radius, y: mon.y - mon.radius, width: mon.radius*2, height: mon.radius*2 };
                 if (checkCollision(fakePlayerBox, fakeMonBox)) {
-                    score += 100;
+                    score += 150;
                     document.getElementById("scoreVal").textContent = score;
                     moneyItems.splice(i, 1);
                     continue;
                 }
 
-                if (mon.y > canvas.height + 50) moneyItems.splice(i, 1);
+                if (mon.y > canvas.height + 40) moneyItems.splice(i, 1);
             }
 
-            // AI tracking calculations for police cars
+            // POLICE TRACKING ENGINE 
             for (let i = policeCars.length - 1; i >= 0; i--) {
                 let cop = policeCars[i];
 
@@ -261,40 +309,67 @@
                 cop.angle = Math.atan2(dy, dx);
 
                 cop.x += Math.cos(cop.angle) * cop.speed;
-                cop.y += Math.sin(cop.angle) * cop.speed;
+                cop.y += Math.sin(cop.angle) * cop.speed - (player.speed - player.baseSpeed);
 
+                // DRAW COP CAR MODEL
                 ctx.save();
                 ctx.translate(cop.x + cop.width/2, cop.y + cop.height/2);
                 ctx.rotate(cop.angle - Math.PI / 2);
-
-                ctx.fillStyle = "#2c3e50"; 
+                ctx.fillStyle = "#1e3a8a"; 
                 ctx.fillRect(-cop.width/2, -cop.height/2, cop.width, cop.height);
-
-                ctx.fillStyle = (gameFrame % 14 < 7) ? "#ef4444" : "#3b82f6";
+                ctx.fillStyle = (gameFrame % 12 < 6) ? "#ef4444" : "#3b82f6";
                 ctx.fillRect(-cop.width/2 + 2, -4, cop.width - 4, 6);
-
                 ctx.restore();
 
+                // Check if the cop crashes into any boulders
+                let copBox = { x: cop.x, y: cop.y, width: cop.width, height: cop.height };
+                let copWrecked = false;
+
+                for (let j = 0; j < obstacles.length; j++) {
+                    let obs = obstacles[j];
+                    let obsBox = { x: obs.x - obs.size/2, y: obs.y - obs.size/2, width: obs.size, height: obs.size };
+                    if (checkCollision(copBox, obsBox)) {
+                        makeExplosion(cop.x + cop.width/2, cop.y + cop.height/2);
+                        score += 300; 
+                        document.getElementById("scoreVal").textContent = score;
+                        policeCars.splice(i, 1);
+                        copWrecked = true;
+                        break;
+                    }
+                }
+                if (copWrecked) continue;
+
                 let fakePlayerBox = { x: player.x, y: player.y, width: player.width, height: player.height };
-                if (checkCollision(fakePlayerBox, cop)) triggerGameOver();
+                if (checkCollision(fakePlayerBox, copBox)) triggerGameOver();
+
+                if (cop.y > canvas.height + 100 || cop.y < -150) policeCars.splice(i, 1);
             }
-            // Render Player Escaping Vehicle
+            // PROCESS WRECKAGE PARTICLES EXPLOSIONS
+            for (let i = explosions.length - 1; i >= 0; i--) {
+                let p = explosions[i];
+                p.x += p.vx;
+                p.y += p.vy - (player.speed - player.baseSpeed); 
+                p.life--;
+
+                ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.fill();
+
+                if (p.life <= 0) explosions.splice(i, 1);
+            }
+
+            // RENDER PLAYER ESCAPING VEHICLE
             ctx.save();
             ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
             ctx.rotate(player.angle);
-
-            ctx.fillStyle = "#e67e22"; // Muscle car color
+            ctx.fillStyle = "#f97316"; 
             ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
-
-            ctx.fillStyle = "#2c3e50"; // Windows
+            ctx.fillStyle = "#0f172a"; 
             ctx.fillRect(-player.width / 2 + 3, -12, player.width - 6, 14);
-
             ctx.restore();
 
             requestAnimationFrame(gameLoop);
         }
 
-        // Initialize Launch Instance
         gameLoop();
     </script>
 </body>
