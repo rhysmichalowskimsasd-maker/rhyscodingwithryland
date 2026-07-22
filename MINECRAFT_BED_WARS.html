@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bed Wars 2D - Cloud Drop Edition</title>
+    <title>Bed Wars 2D - Manual Place Edition</title>
     <style>
         body {
             margin: 0;
@@ -73,7 +73,7 @@
                 <div class="hud-title" style="color: #38bdf8;">🔵 Player 1 (Left)</div>
                 <div>Bed: <span id="p1Bed" class="alive">❤️ ALIVE</span></div>
                 <div>Kills: <span id="p1Kills">0</span></div>
-                <div class="stat-keys">Run: <b>W,A,D</b> | Hit: <b>Q</b> | Mine: <b>E</b></div>
+                <div class="stat-keys">Run: <b>W,A,D</b> | Hit: <b>Q</b> | Build: <b>F</b> | Mine: <b>E</b></div>
             </div>
             <div style="border-left: 1px solid #475569; padding-left: 15px;">
                 <div>Iron: <span id="p1Iron" style="color: #cbd5e1;">0</span></div>
@@ -91,12 +91,12 @@
                 <div class="hud-title" style="color: #4ade80;">🟢 Player 2 (Right)</div>
                 <div>Bed: <span id="p2Bed" class="alive">❤️ ALIVE</span></div>
                 <div>Kills: <span id="p2Kills">0</span></div>
-                <div class="stat-keys">Run: <b>Arrows</b> | Hit: <b>M</b> | Mine: <b>L</b></div>
+                <div class="stat-keys">Run: <b>Arrows</b> | Hit: <b>M</b> | Build: <b>K</b> | Mine: <b>L</b></div>
             </div>
         </div>
 
         <div id="central-shop">
-            <span>🛒 CLOUD RESPAWN ENGINE: Drop from the sky directly onto your bed blocks!</span>
+            <span>🛒 MANUAL PLACING ENGINE: Press your Build keys to carefully place wool blocks across the map!</span>
         </div>
 
         <canvas id="gameCanvas" width="1024" height="576"></canvas>
@@ -131,17 +131,16 @@
         }
 
         // Fixed bed array indexing
-        world[11][2] = 4;  
-        world[11][29] = 5; 
+        world = 4;  
+        world = 5; 
 
         const generators = [
             { x: 3 * BLOCK_SIZE, y: 11 * BLOCK_SIZE, type: 'iron', timer: 0, interval: 40 },
             { x: 28 * BLOCK_SIZE, y: 11 * BLOCK_SIZE, type: 'iron', timer: 0, interval: 40 },
             { x: 16 * BLOCK_SIZE, y: 12 * BLOCK_SIZE, type: 'diamond', timer: 0, interval: 160 }
         ];
-        world[13][15] = 1; world[13][16] = 1;
+        world = 1; world = 1;
 
-        // FIXED SKY SPAWN: y: -100 causes characters to drop cleanly out of the air
         const p1 = {
             id: 1, color: "#38bdf8", weaponColor: "#cbd5e1",
             x: 2 * BLOCK_SIZE + 5, y: -100, width: 22, height: 42, vx: 0, vy: 0,
@@ -165,17 +164,26 @@
         const keys = {};
         window.addEventListener("keydown", e => keys[e.code] = true);
         window.addEventListener("keyup", e => keys[e.code] = false);
-        function autoPlaceBlocks(p) {
-            // FIXED BRIDGE: Only deploy safety bridges if the player has dropped past the cloud ceiling
+        // NEW FEATURE: Manual block placement engine module
+        function manualPlaceBlock(p) {
+            // Do not allow placing blocks if player is still dropping out of the clouds
             if (p.y < 0) return;
 
-            const centerX = p.x + p.width / 2;
-            const bottomY = p.y + p.height + 2;
-            const c = Math.floor(centerX / BLOCK_SIZE);
-            const r = Math.floor(bottomY / BLOCK_SIZE);
+            let playerCenterX = p.x + p.width / 2;
+            let playerCenterY = p.y + p.height / 2;
+
+            // Project 24 pixels forward in the direction they face to find the block slot
+            let targetX = playerCenterX + (p.facingDir * 24);
+            let targetY = playerCenterY;
+
+            let c = Math.floor(targetX / BLOCK_SIZE);
+            let r = Math.floor(targetY / BLOCK_SIZE);
 
             if (r >= 0 && r < WORLD_ROWS && c >= 0 && c < WORLD_COLS) {
-                if (world[r][c] === 0) world[r][c] = p.blockType;
+                // Ensure targeted tile is empty air space before placing
+                if (world[r][c] === 0) {
+                    world[r][c] = p.blockType;
+                }
             }
         }
 
@@ -232,9 +240,7 @@
                 world[p2R][p2C] = 0; p1.bedAlive = false; p1.hudBed.textContent = "❌ DESTROYED"; p1.hudBed.className = "dead";
             }
         }
-
         function checkCollision(px, py, p) {
-            // Let players fall freely through the sky without colliding with roof metrics
             if (py < 0) return false;
 
             const left = Math.floor(px / BLOCK_SIZE);
@@ -284,16 +290,21 @@
                 victim.iron = Math.floor(victim.iron / 2); victim.hudIron.textContent = victim.iron;
             }
         }
+
         function gameLoop() {
             updatePhysics(p1, "KeyA", "KeyD", "KeyW");
             updatePhysics(p2, "ArrowLeft", "ArrowRight", "ArrowUp");
 
+            // Key Actions handlers
             if (keys["KeyQ"] && !p1.isAttacking) { p1.isAttacking = true; p1.attackTimer = 10; }
             if (keys["KeyM"] && !p2.isAttacking) { p2.isAttacking = true; p2.attackTimer = 10; }
             if (keys["KeyE"]) { breakBlockInFront(p1); keys["KeyE"] = false; }
             if (keys["KeyL"]) { breakBlockInFront(p2); keys["KeyL"] = false; }
 
-            autoPlaceBlocks(p1); autoPlaceBlocks(p2);
+            // NEW TRACKERS: Manual building block listeners (Wiped after press to prevent block spamming)
+            if (keys["KeyF"]) { manualPlaceBlock(p1); keys["KeyF"] = false; }
+            if (keys["KeyK"]) { manualPlaceBlock(p2); keys["KeyK"] = false; }
+
             checkCombatAndObjectives();
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
