@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2-Player 2D Bed Wars</title>
+    <title>Bed Wars 2D - All-Inclusive Build</title>
     <style>
         body {
             margin: 0;
-            background-color: #0d1117;
+            background-color: #0b0e14;
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -16,69 +16,106 @@
             font-family: 'Segoe UI', system-ui, sans-serif;
             user-select: none;
         }
-        canvas {
-            box-shadow: 0px 10px 40px rgba(0,0,0,0.8);
-            background-color: #161b22;
+        #game-container {
+            position: relative;
+            box-shadow: 0px 15px 50px rgba(0,0,0,0.8);
+            border-radius: 8px;
+            overflow: hidden;
         }
-        #hud-container {
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #111926, #1f2d42);
+        }
+        .hud {
             position: absolute;
             top: 15px;
-            width: 930px;
             display: flex;
-            justify-content: space-between;
-            pointer-events: none;
-        }
-        .player-panel {
-            background: rgba(22, 27, 34, 0.85);
-            border: 2px solid #30363d;
-            padding: 12px;
-            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(4px);
+            border: 2px solid #334155;
+            padding: 10px 15px;
+            border-radius: 6px;
             color: white;
-            width: 220px;
+            font-size: 14px;
+            gap: 20px;
             text-shadow: 1px 1px 2px black;
         }
-        .p1-title { color: #58a6ff; font-weight: bold; font-size: 18px; margin: 0 0 6px 0; }
-        .p2-title { color: #56d364; font-weight: bold; font-size: 18px; margin: 0 0 6px 0; }
-        .stat { display: flex; justify-content: space-between; font-size: 13px; margin: 3px 0; }
+        #hud-p1 { left: 15px; border-left: 5px solid #38bdf8; }
+        #hud-p2 { right: 15px; border-right: 5px solid #4ade80; }
+        .hud-title { font-weight: bold; font-size: 16px; margin: 0 0 4px 0; }
+        .alive { color: #4ade80; font-weight: bold; }
+        .dead { color: #f87171; font-weight: bold; }
+        .stat-keys { font-size: 12px; color: #94a3b8; }
+        
+        #central-shop {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid #475569;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: #e2e8f0;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .shop-tag { color: #fbbf24; }
     </style>
 </head>
 <body>
 
-    <div id="hud-container">
-        <!-- Blue Player HUD -->
-        <div class="player-panel">
-            <h3 class="p1-title">🔵 Player 1 (Blue)</h3>
-            <div class="stat">Controls: <span><b>W, A, D</b></span></div>
-            <div class="stat">Bed Status: <span id="p1Bed" style="color:#56d364; font-weight:bold;">❤️ ALIVE</span></div>
-            <div class="stat">Kills: <span id="p1Kills">0</span></div>
+    <div id="game-container">
+        <!-- Blue Player HUD Panel -->
+        <div class="hud" id="hud-p1">
+            <div>
+                <div class="hud-title" style="color: #38bdf8;">🔵 Player 1 (Left)</div>
+                <div>Bed: <span id="p1Bed" class="alive">❤️ ALIVE</span></div>
+                <div>Kills: <span id="p1Kills">0</span></div>
+                <div class="stat-keys">Move: <b>W,A,D</b> | Hit: <b>Q</b> | Break: <b>E</b></div>
+            </div>
+            <div style="border-left: 1px solid #475569; padding-left: 15px;">
+                <div>Iron: <span id="p1Iron" style="color: #cbd5e1;">0</span></div>
+                <div>Sword: <span id="p1Sword" style="color: #fbbf24;">Wood</span></div>
+            </div>
         </div>
 
-        <!-- Green Player HUD -->
-        <div class="player-panel">
-            <h3 class="p2-title">🟢 Player 2 (Green)</h3>
-            <div class="stat">Controls: <span><b>Arrows</b></span></div>
-            <div class="stat">Bed Status: <span id="p2Bed" style="color:#56d364; font-weight:bold;">❤️ ALIVE</span></div>
-            <div class="stat">Kills: <span id="p2Kills">0</span></div>
+        <!-- Green Player HUD Panel -->
+        <div class="hud" id="hud-p2">
+            <div style="padding-right: 15px; text-align: right;">
+                <div>Iron: <span id="p2Iron" style="color: #cbd5e1;">0</span></div>
+                <div>Sword: <span id="p2Sword" style="color: #fbbf24;">Wood</span></div>
+            </div>
+            <div style="border-left: 1px solid #475569; padding-left: 15px;">
+                <div class="hud-title" style="color: #4ade80;">🟢 Player 2 (Right)</div>
+                <div>Bed: <span id="p2Bed" class="alive">❤️ ALIVE</span></div>
+                <div>Kills: <span id="p2Kills">0</span></div>
+                <div class="stat-keys">Move: <b>Arrows</b> | Hit: <b>M</b> | Break: <b>L</b></div>
+            </div>
         </div>
+
+        <div id="central-shop">
+            <span>🛒 AUTO FORGE SHOP: Stand near your base spawner to safely collect Iron and buy Upgrades!</span>
+        </div>
+
+        <canvas id="gameCanvas" width="1024" height="576"></canvas>
     </div>
-
-    <canvas id="gameCanvas" width="960" height="540"></canvas>
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
         const BLOCK_SIZE = 32; 
-        const WORLD_COLS = 30; // Compact map width for quick tactical matches
-        const WORLD_ROWS = 17;
+        const WORLD_COLS = 32; 
+        const WORLD_ROWS = 18;
 
-        // Block Type Legend Dictionary
         const COLORS = {
             0: "transparent",
-            1: "#21262d", // Hard Base Island Rock
-            2: "#1f6feb", // Player 1 Wool Platform (Blue)
-            3: "#238636", // Player 2 Wool Platform (Green)
-            4: "#ff7b72", // Player 1 Bed Node
-            5: "#7ee787"  // Player 2 Bed Node
+            1: "#1e293b", // Endstone base island core
+            2: "#0284c7", // Blue platform wool block
+            3: "#166534", // Green platform wool block
+            4: "#ef4444", // Red bed tile
+            5: "#22c55e"  // Green bed tile
         };
 
         const world = [];
@@ -87,99 +124,129 @@
             for (let c = 0; c < WORLD_COLS; c++) world[r][c] = 0;
         }
 
-        // Generate Player 1 Island (Left Side)
-        for (let r = 11; r <= 13; r++) {
-            for (let c = 1; c <= 5; c++) world[r][c] = 1;
+        // Generate Hard Base Core Rocks
+        for (let r = 12; r <= 15; r++) {
+            for (let c = 1; c <= 5; c++) world[r][c] = 1; 
+            for (let c = 26; c <= 30; c++) world[r][c] = 1; 
         }
-        world[10][2] = 4; // Place Blue Bed
 
-        // Generate Player 2 Island (Right Side)
-        for (let r = 11; r <= 13; r++) {
-            for (let c = 24; c <= 28; c++) world[r][c] = 1;
-        }
-        world[10][27] = 5; // Place Green Bed
+        // Securely write bed vectors into arrays
+        world[11][2] = 4; 
+        world[11][29] = 5; 
+
+        // Forge Generator Units Location arrays
+        const generators = [
+            { x: 3 * BLOCK_SIZE, y: 11 * BLOCK_SIZE, type: 'iron', timer: 0, interval: 50 },
+            { x: 28 * BLOCK_SIZE, y: 11 * BLOCK_SIZE, type: 'iron', timer: 0, interval: 50 },
+            { x: 16 * BLOCK_SIZE, y: 12 * BLOCK_SIZE, type: 'diamond', timer: 0, interval: 200 }
+        ];
+        world[13][15] = 1; world[13][16] = 1; // Middle resource rock pad
+
         const p1 = {
-            id: 1,
-            x: 64, y: 200,
-            width: 20, height: 38,
-            vx: 0, vy: 0,
-            speed: 4, gravity: 0.35, jumpForce: -8.5,
-            grounded: false, bedAlive: true, kills: 0,
-            spawnX: 64, spawnY: 200, blockType: 2
+            id: 1, color: "#38bdf8", weaponColor: "#cbd5e1",
+            x: 64, y: 250, width: 22, height: 42, vx: 0, vy: 0,
+            speed: 4.2, gravity: 0.38, jumpForce: -9, grounded: false,
+            bedAlive: true, kills: 0, iron: 0, swordLevel: 1, swordName: "Wood",
+            isAttacking: false, attackTimer: 0, facingDir: 1,
+            spawnX: 64, spawnY: 250, blockType: 2, hudIron: document.getElementById("p1Iron"),
+            hudSword: document.getElementById("p1Sword"), hudBed: document.getElementById("p1Bed"), hudKills: document.getElementById("p1Kills")
         };
 
         const p2 = {
-            id: 2,
-            x: 870, y: 200,
-            width: 20, height: 38,
-            vx: 0, vy: 0,
-            speed: 4, gravity: 0.35, jumpForce: -8.5,
-            grounded: false, bedAlive: true, kills: 0,
-            spawnX: 870, spawnY: 200, blockType: 3
+            id: 2, color: "#4ade80", weaponColor: "#cbd5e1",
+            x: 930, y: 250, width: 22, height: 42, vx: 0, vy: 0,
+            speed: 4.2, gravity: 0.38, jumpForce: -9, grounded: false,
+            bedAlive: true, kills: 0, iron: 0, swordLevel: 1, swordName: "Wood",
+            isAttacking: false, attackTimer: 0, facingDir: -1,
+            spawnX: 930, spawnY: 250, blockType: 3, hudIron: document.getElementById("p2Iron"),
+            hudSword: document.getElementById("p2Sword"), hudBed: document.getElementById("p2Bed"), hudKills: document.getElementById("p2Kills")
         };
 
         const keys = {};
         window.addEventListener("keydown", e => keys[e.code] = true);
         window.addEventListener("keyup", e => keys[e.code] = false);
-
-        const p1BedText = document.getElementById("p1Bed");
-        const p2BedText = document.getElementById("p2Bed");
-        const p1KillsText = document.getElementById("p1Kills");
-        const p2KillsText = document.getElementById("p2Kills");
-        // Auto-Bridge module to automatically build under-foot blocks
-        function autoPlaceBlocks(player) {
-            const centerX = player.x + player.width / 2;
-            const bottomY = player.y + player.height + 2;
-
+        function autoPlaceBlocks(p) {
+            const centerX = p.x + p.width / 2;
+            const bottomY = p.y + p.height + 2;
             const c = Math.floor(centerX / BLOCK_SIZE);
             const r = Math.floor(bottomY / BLOCK_SIZE);
 
             if (r >= 0 && r < WORLD_ROWS && c >= 0 && c < WORLD_COLS) {
-                // If walking over empty space, instantly drop team color block
-                if (world[r][c] === 0) {
-                    world[r][c] = player.blockType;
-                }
+                if (world[r][c] === 0) world[r][c] = p.blockType;
             }
         }
 
-        // Simple bounding box checks to trigger combat or bed destructions
-        function checkPlayerCombat() {
-            // Check if Player 1 steps on Player 2's Green Bed
-            let p1ColC = Math.floor((p1.x + p1.width/2) / BLOCK_SIZE);
-            let p1RowR = Math.floor((p1.y + p1.height/2) / BLOCK_SIZE);
-            if (world[p1RowR][p1ColC] === 5) {
-                world[p1RowR][p1ColC] = 0; // Bed broken!
-                p2.bedAlive = false;
-                p2BedText.textContent = "❌ DESTROYED";
-                p2BedText.style.color = "#ff7b72";
-            }
+        function breakBlockInFront(p) {
+            let targetX = (p.x + p.width / 2) + (p.facingDir * 22);
+            let targetY = p.y + p.height / 2;
+            let c = Math.floor(targetX / BLOCK_SIZE);
+            let r = Math.floor(targetY / BLOCK_SIZE);
 
-            // Check if Player 2 steps on Player 1's Blue Bed
-            let p2ColC = Math.floor((p2.x + p2.width/2) / BLOCK_SIZE);
-            let p2RowR = Math.floor((p2.y + p2.height/2) / BLOCK_SIZE);
-            if (world[p2RowR][p2ColC] === 4) {
-                world[p2RowR][p2ColC] = 0; // Bed broken!
-                p1.bedAlive = false;
-                p1BedText.textContent = "❌ DESTROYED";
-                p1BedText.style.color = "#ff7b72";
-            }
-
-            // Sword fight calculation: check if player avatars overlap
-            if (p1.x < p2.x + p2.width && p1.x + p1.width > p2.x &&
-                p1.y < p2.y + p2.height && p1.y + p1.height > p2.y) {
-                // The player moving faster horizontally knocks out the other
-                if (Math.abs(p1.vx) > Math.abs(p2.vx)) {
-                    killPlayer(p2, p1);
-                } else if (Math.abs(p2.vx) > Math.abs(p1.vx)) {
-                    killPlayer(p1, p2);
-                }
+            if (r >= 0 && r < WORLD_ROWS && c >= 0 && c < WORLD_COLS) {
+                const targetType = world[r][c];
+                if (targetType === 2 || targetType === 3) world[r][c] = 0; // Clears player placed wools
             }
         }
-        function checkCollision(px, py, player) {
+
+        function handleAutomaticUpgrades(p) {
+            if (p.iron >= 30 && p.swordLevel < 3) {
+                p.iron -= 30; p.swordLevel = 3; p.swordName = "Diamond (+Slay)"; p.weaponColor = "#38bdf8";
+            } else if (p.iron >= 12 && p.swordLevel < 2) {
+                p.iron -= 12; p.swordLevel = 2; p.swordName = "Iron (+Knock)"; p.weaponColor = "#e2e8f0";
+            }
+            p.hudIron.textContent = p.iron;
+            p.hudSword.textContent = p.swordName;
+        }
+        function checkCombatAndObjectives() {
+            if (p1.isAttacking) { p1.attackTimer--; if(p1.attackTimer <= 0) p1.isAttacking = false; }
+            if (p2.isAttacking) { p2.attackTimer--; if(p2.attackTimer <= 0) p2.isAttacking = false; }
+
+            // Player 1 Strike Trigger Check
+            if (p1.isAttacking && p1.attackTimer === 8) {
+                let swordX = p1.facingDir === 1 ? p1.x + p1.width : p1.x - 24;
+                if (swordX + 24 > p2.x && swordX < p2.x + p2.width && p1.y + p1.height > p2.y && p1.y < p2.y + p2.height) {
+                    p2.vx = p1.facingDir * (6 + p1.swordLevel * 3); p2.vy = -4; p2.x += p2.vx;
+                    if (p1.swordLevel === 3) killPlayer(p2, p1);
+                }
+            }
+
+            // Player 2 Strike Trigger Check
+            if (p2.isAttacking && p2.attackTimer === 8) {
+                let swordX = p2.facingDir === 1 ? p2.x + p2.width : p2.x - 24;
+                if (swordX + 24 > p1.x && swordX < p1.x + p1.width && p2.y + p2.height > p1.y && p2.y < p1.y + p1.height) {
+                    p1.vx = p2.facingDir * (6 + p2.swordLevel * 3); p1.vy = -4; p1.x += p1.vx;
+                    if (p2.swordLevel === 3) killPlayer(p1, p2);
+                }
+            }
+
+            // Bed Overlap Check
+            let p1C = Math.floor((p1.x + p1.width/2) / BLOCK_SIZE);
+            let p1R = Math.floor((p1.y + p1.height/2) / BLOCK_SIZE);
+            if (p1R >= 0 && p1R < WORLD_ROWS && p1C >= 0 && p1C < WORLD_COLS && world[p1R][p1C] === 5) {
+                world[p1R][p1C] = 0; p2.bedAlive = false; p2.hudBed.textContent = "❌ DESTROYED"; p2.hudBed.className = "dead";
+            }
+            let p2C = Math.floor((p2.x + p2.width/2) / BLOCK_SIZE);
+            let p2R = Math.floor((p2.y + p2.height/2) / BLOCK_SIZE);
+            if (p2R >= 0 && p2R < WORLD_ROWS && p2C >= 0 && p2C < WORLD_COLS && world[p2R][p2C] === 4) {
+                world[p2R][p2C] = 0; p1.bedAlive = false; p1.hudBed.textContent = "❌ DESTROYED"; p1.hudBed.className = "dead";
+            }
+        }
+
+        function killPlayer(victim, attacker) {
+            if (attacker) { attacker.kills++; attacker.hudKills.textContent = attacker.kills; }
+            if (!victim.bedAlive) {
+                alert(`👑 MATCH OVER! Player ${victim.id === 1 ? '2 (Green)' : '1 (Blue)'} wins!`);
+                location.reload();
+            } else {
+                victim.x = victim.spawnX; victim.y = victim.spawnY; victim.vx = 0; victim.vy = 0;
+                victim.iron = Math.floor(victim.iron / 2); victim.hudIron.textContent = victim.iron;
+            }
+        }
+        function checkCollision(px, py, p) {
             const left = Math.floor(px / BLOCK_SIZE);
-            const right = Math.floor((px + player.width) / BLOCK_SIZE);
+            const right = Math.floor((px + p.width) / BLOCK_SIZE);
             const top = Math.floor(py / BLOCK_SIZE);
-            const bottom = Math.floor((py + player.height) / BLOCK_SIZE);
+            const bottom = Math.floor((py + p.height) / BLOCK_SIZE);
 
             for (let r = top; r <= bottom; r++) {
                 for (let c = left; c <= right; c++) {
@@ -191,98 +258,81 @@
             return false;
         }
 
-        function updatePlayerPhysics(p, leftKey, rightKey, upKey) {
+        function updatePhysics(p, leftKey, rightKey, upKey) {
             p.vx = 0;
-            if (keys[leftKey]) p.vx = -p.speed;
-            if (keys[rightKey]) p.vx = p.speed;
+            if (keys[leftKey]) { p.vx = -p.speed; p.facingDir = -1; }
+            if (keys[rightKey]) { p.vx = p.speed; p.facingDir = 1; }
 
             p.x += p.vx;
             if (checkCollision(p.x, p.y, p)) p.x -= p.vx;
 
             p.vy += p.gravity;
-            if (keys[upKey] && p.grounded) {
-                p.vy = p.jumpForce;
-                p.grounded = false;
-            }
+            if (keys[upKey] && p.grounded) { p.vy = p.jumpForce; p.grounded = false; }
 
             p.y += p.vy;
             if (checkCollision(p.x, p.y, p)) {
                 if (p.vy > 0) p.grounded = true;
-                p.y -= p.vy;
-                p.vy = 0;
-            } else {
-                p.grounded = false;
-            }
+                p.y -= p.vy; p.vy = 0;
+            } else { p.grounded = false; }
 
-            // Map Edge Constraints
             if (p.x < 0) p.x = 0;
             if (p.x + p.width > canvas.width) p.x = canvas.width - p.width;
-
-            // Void Elimination Trigger
-            if (p.y > canvas.height) {
-                killPlayer(p, null);
-            }
+            if (p.y > canvas.height) killPlayer(p, null);
         }
-        function killPlayer(victim, attacker) {
-            if (attacker) {
-                attacker.kills++;
-                p1KillsText.textContent = p1.kills;
-                p2KillsText.textContent = p2.kills;
-            }
-
-            if (!victim.bedAlive) {
-                alert(`GAME OVER! Player ${victim.id === 1 ? '2 (Green)' : '1 (Blue)'} wins the match!`);
-                location.reload();
-            } else {
-                victim.x = victim.spawnX;
-                victim.y = victim.spawnY;
-                victim.vx = 0; victim.vy = 0;
-            }
-        }
-
         function gameLoop() {
-            // Run physics states for both players independently
-            updatePlayerPhysics(p1, "KeyA", "KeyD", "KeyW");
-            updatePlayerPhysics(p2, "ArrowLeft", "ArrowRight", "ArrowUp");
+            updatePhysics(p1, "KeyA", "KeyD", "KeyW");
+            updatePhysics(p2, "ArrowLeft", "ArrowRight", "ArrowUp");
 
-            // Deploy auto-bridging blocks under foot coordinates
-            autoPlaceBlocks(p1);
-            autoPlaceBlocks(p2);
+            // Key Actions listeners
+            if (keys["KeyQ"] && !p1.isAttacking) { p1.isAttacking = true; p1.attackTimer = 10; }
+            if (keys["KeyM"] && !p2.isAttacking) { p2.isAttacking = true; p2.attackTimer = 10; }
+            if (keys["KeyE"]) { breakBlockInFront(p1); keys["KeyE"] = false; }
+            if (keys["KeyL"]) { breakBlockInFront(p2); keys["KeyL"] = false; }
 
-            checkPlayerCombat();
+            autoPlaceBlocks(p1); autoPlaceBlocks(p2);
+            checkCombatAndObjectives();
 
-            // Clear Scene Canvas Screen
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Base Islands & Placed Bridging Tiles
+            // Spawner generator calculations loops
+            generators.forEach(gen => {
+                gen.timer++; if (gen.timer >= gen.interval) gen.timer = 0;
+                ctx.fillStyle = gen.type === 'iron' ? "rgba(200,200,220,0.15)" : "rgba(56,189,248,0.2)";
+                ctx.beginPath(); ctx.arc(gen.x + BLOCK_SIZE/2, gen.y + BLOCK_SIZE/2, 14 + Math.sin(Date.now()*0.005)*3, 0, Math.PI*2); ctx.fill();
+
+                [p1, p2].forEach(p => {
+                    let d = Math.hypot((p.x + p.width/2) - (gen.x + BLOCK_SIZE/2), (p.y + p.height/2) - (gen.y + BLOCK_SIZE/2));
+                    if (d < 32 && gen.timer === 0) { p.iron += gen.type === 'iron' ? 1 : 5; handleAutomaticUpgrades(p); }
+                });
+            });
+
+            // Map grid rendering loops
             for (let r = 0; r < WORLD_ROWS; r++) {
                 for (let c = 0; c < WORLD_COLS; c++) {
                     const type = world[r][c];
                     if (type !== 0) {
-                        ctx.fillStyle = COLORS[type];
-                        ctx.fillRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                        
-                        // Add visible block frame accents
-                        ctx.strokeStyle = "rgba(0,0,0,0.3)";
-                        ctx.strokeRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                        ctx.fillStyle = COLORS[type]; ctx.fillRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                        if (type === 1) { ctx.fillStyle = "#334155"; ctx.fillRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, 3); }
+                        else if (type === 4 || type === 5) { ctx.fillStyle = "#ffffff"; ctx.fillRect(c * BLOCK_SIZE + 4, r * BLOCK_SIZE + 4, 10, 10); }
+                        ctx.strokeStyle = "rgba(0,0,0,0.4)"; ctx.strokeRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
                     }
                 }
             }
 
-            // Draw Player 1 (Blue Character Model)
-            ctx.fillStyle = "#58a6ff";
-            ctx.fillRect(p1.x, p1.y, p1.width, p1.height);
+            // Draw Player 1 + Slash
+            ctx.fillStyle = p1.color; ctx.fillRect(p1.x, p1.y, p1.width, p1.height);
+            ctx.fillStyle = p1.weaponColor; ctx.fillRect(p1.x + (p1.facingDir === 1 ? p1.width : -8), p1.y + 16, 8, 4);
+            if (p1.isAttacking) { ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.fillRect(p1.facingDir === 1 ? p1.x + p1.width : p1.x - 16, p1.y + 10, 16, 22); }
 
-            // Draw Player 2 (Green Character Model)
-            ctx.fillStyle = "#56d364";
-            ctx.fillRect(p2.x, p2.y, p2.width, p2.height);
+            // Draw Player 2 + Slash
+            ctx.fillStyle = p2.color; ctx.fillRect(p2.x, p2.y, p2.width, p2.height);
+            ctx.fillStyle = p2.weaponColor; ctx.fillRect(p2.x + (p2.facingDir === 1 ? p2.width : -8), p2.y + 16, 8, 4);
+            if (p2.isAttacking) { ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.fillRect(p2.facingDir === 1 ? p2.x + p2.width : p2.x - 16, p2.y + 10, 16, 22); }
 
             requestAnimationFrame(gameLoop);
         }
 
-        // Run Match Framework
         gameLoop();
     </script>
-    
 </body>
 </html>
