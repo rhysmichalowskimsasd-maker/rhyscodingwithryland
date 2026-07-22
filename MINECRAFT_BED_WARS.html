@@ -1,275 +1,287 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2D HTML Bed Wars</title>
+    <title>2-Player 2D Bed Wars</title>
     <style>
         body {
             margin: 0;
-            background-color: #0b0e14;
+            background-color: #0d1117;
             overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             user-select: none;
         }
         canvas {
-            box-shadow: 0px 10px 30px rgba(0,0,0,0.7);
-            background-color: #0d1b2a;
+            box-shadow: 0px 10px 40px rgba(0,0,0,0.8);
+            background-color: #161b22;
         }
-        #ui-layer {
+        #hud-container {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        h2 { margin: 0; font-size: 24px; color: #e74c3c; letter-spacing: 1px; }
-        p { margin: 0; font-size: 13px; opacity: 0.9; }
-        
-        #scoreboard {
-            margin-top: 10px;
-            background: rgba(0,0,0,0.6);
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.1);
-            width: 180px;
-        }
-        .stat-line { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 14px;}
-        
-        #hotbar {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            background: rgba(0,0,0,0.7);
-            padding: 6px;
-            border-radius: 6px;
-            border: 2px solid #444;
-            gap: 6px;
-        }
-        .slot {
-            width: 45px;
-            height: 45px;
-            border: 2px solid #555;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            color: white;
-            font-size: 11px;
-            border-radius: 4px;
-            position: relative;
-        }
-        .slot .count {
-            position: absolute;
-            bottom: 2px;
-            right: 4px;
-            font-size: 10px;
-            color: #f1c40f;
-        }
-        .slot.active {
-            border-color: #e74c3c;
-            background: rgba(255,255,255,0.1);
-            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
-        }
-        
-        /* Shop Overlay UI */
-        #shop-ui {
-            position: absolute;
-            background: rgba(20, 24, 35, 0.95);
-            border: 3px solid #34495e;
-            border-radius: 8px;
-            padding: 20px;
-            color: white;
-            display: none;
-            flex-direction: column;
-            gap: 10px;
-            width: 300px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
-        }
-        .shop-title { font-size: 18px; font-weight: bold; color: #3498db; text-align: center; border-bottom: 2px solid #34495e; padding-bottom: 8px; }
-        .shop-item {
+            top: 15px;
+            width: 930px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            background: rgba(255,255,255,0.05);
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.1);
+            pointer-events: none;
         }
-        .shop-btn {
-            background: #2ecc71;
-            border: none;
+        .player-panel {
+            background: rgba(22, 27, 34, 0.85);
+            border: 2px solid #30363d;
+            padding: 12px;
+            border-radius: 8px;
             color: white;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 3px;
+            width: 220px;
+            text-shadow: 1px 1px 2px black;
         }
-        .shop-btn:hover { background: #27ae60; }
-        #close-shop {
-            background: #e74c3c;
-            border: none;
-            color: white;
-            padding: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 4px;
-            margin-top: 5px;
-        }
+        .p1-title { color: #58a6ff; font-weight: bold; font-size: 18px; margin: 0 0 6px 0; }
+        .p2-title { color: #56d364; font-weight: bold; font-size: 18px; margin: 0 0 6px 0; }
+        .stat { display: flex; justify-content: space-between; font-size: 13px; margin: 3px 0; }
     </style>
 </head>
 <body>
 
-    <div id="ui-layer">
-        <h2>BED WARS 2D</h2>
-        <p><b>A / D / Space</b>: Move & Jump</p>
-        <p><b>Left Click</b>: Mine Blocks/Enemy Bed</p>
-        <p><b>Right Click</b>: Place Blocks</p>
-        <p><b>E</b>: Open Shop (Must stand near the yellow NPC Vendor)</p>
-    </div>
-
-    <!-- Bed Wars Scoreboard Layout -->
-    <div id="scoreboard" style="position: absolute; top: 20px; right: 20px; color: white;">
-        <div style="font-weight: bold; color: #f1c40f; text-align: center; margin-bottom: 8px; border-bottom: 1px solid #555; padding-bottom: 4px;">BED WARS</div>
-        <div class="stat-line"><span>Your Bed:</span> <span id="bedStatus" style="color: #2ecc71; font-weight: bold;">❤️ ALIVE</span></div>
-        <div class="stat-line"><span>Enemy Bed:</span> <span id="enemyBedStatus" style="color: #2ecc71; font-weight: bold;">❤️ ALIVE</span></div>
-        <div class="stat-line" style="margin-top: 10px;"><span>⚙️ Iron:</span> <span id="ironVal" style="color: #bdc3c7; font-weight: bold;">0</span></div>
-    </div>
-
-    <!-- Inventory Hotbar System -->
-    <div id="hotbar">
-        <div class="slot active" id="slot-1" style="background-color: #7f8c8d;">Blocks<span class="count" id="count-1">0</span></div>
-        <div class="slot" id="slot-2" style="background-color: #2980b9;">Pickaxe</div>
-        <div class="slot" id="slot-3" style="background-color: #c0392b;">Sword</div>
-    </div>
-
-    <!-- Interactive Shop UI Module -->
-    <div id="shop-ui">
-        <div class="shop-title">TEAM ITEM SHOP</div>
-        <div class="shop-item">
-            <div>🧱 Wool Blocks (x16)<br><span style="font-size: 11px; color: #bdc3c7;">Cost: 4 Iron</span></div>
-            <button class="shop-btn" onclick="buyItem('blocks', 4, 16)">BUY</button>
+    <div id="hud-container">
+        <!-- Blue Player HUD -->
+        <div class="player-panel">
+            <h3 class="p1-title">🔵 Player 1 (Blue)</h3>
+            <div class="stat">Controls: <span><b>W, A, D</b></span></div>
+            <div class="stat">Bed Status: <span id="p1Bed" style="color:#56d364; font-weight:bold;">❤️ ALIVE</span></div>
+            <div class="stat">Kills: <span id="p1Kills">0</span></div>
         </div>
-        <div class="shop-item">
-            <div>⛏️ Sharp Pickaxe<br><span style="font-size: 11px; color: #bdc3c7;">Cost: 10 Iron</span></div>
-            <button class="shop-btn" onclick="buyItem('pickaxe', 10, 1)">BUY</button>
+
+        <!-- Green Player HUD -->
+        <div class="player-panel">
+            <h3 class="p2-title">🟢 Player 2 (Green)</h3>
+            <div class="stat">Controls: <span><b>Arrows</b></span></div>
+            <div class="stat">Bed Status: <span id="p2Bed" style="color:#56d364; font-weight:bold;">❤️ ALIVE</span></div>
+            <div class="stat">Kills: <span id="p2Kills">0</span></div>
         </div>
-        <div class="shop-item">
-            <div>⚔️ Iron Sword<br><span style="font-size: 11px; color: #bdc3c7;">Cost: 20 Iron</span></div>
-            <button class="shop-btn" onclick="buyItem('sword', 20, 1)">BUY</button>
-        </div>
-        <button id="close-shop" onclick="toggleShop(false)">CLOSE SHOP</button>
     </div>
 
     <canvas id="gameCanvas" width="960" height="540"></canvas>
-
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        const BLOCK_SIZE = 40;
-        const WORLD_COLS = 60; // Shorter map layout perfect for rush bridging
-        const WORLD_ROWS = 20;
+        const BLOCK_SIZE = 32; 
+        const WORLD_COLS = 30; // Compact map width for quick tactical matches
+        const WORLD_ROWS = 17;
 
-        // Block IDs Configuration
+        // Block Type Legend Dictionary
         const COLORS = {
-            0: "transparent", 
-            1: "#34495e", // Base Island Hardened Endstone
-            2: "#7f8c8d", // Player Placed Wool Block
-            4: "#f1c40f", // Shop Keeper NPC Marker
-            5: "#e74c3c", // Your Team Bed Block
-            6: "#9b59b6"  // Enemy Target Bed Block
+            0: "transparent",
+            1: "#21262d", // Hard Base Island Rock
+            2: "#1f6feb", // Player 1 Wool Platform (Blue)
+            3: "#238636", // Player 2 Wool Platform (Green)
+            4: "#ff7b72", // Player 1 Bed Node
+            5: "#7ee787"  // Player 2 Bed Node
         };
 
-        // Inventory System Properties 
-        let inventory = { blocks: 16, hasPickaxe: false, hasSword: false };
-        let ironCount = 0;
-        let selectedSlot = 1;
-        let bedAlive = true;
-        let enemyBedAlive = true;
-
-        const ironText = document.getElementById("ironVal");
-        const blockCountText = document.getElementById("count-1");
-        const bedStatusText = document.getElementById("bedStatus");
-        const enemyBedStatusText = document.getElementById("enemyBedStatus");
-        const shopUI = document.getElementById("shop-ui");
-
-        // Player Physical Attributes Vector
-        const player = {
-            x: 160,
-            y: 200,
-            width: 24,
-            height: 44,
-            vx: 0,
-            vy: 0,
-            speed: 4.5,
-            gravity: 0.35,
-            jumpForce: -9,
-            grounded: false
-        };
-
-        const camera = { x: 0, y: 0 };
-        const keys = {};
-
-        // Generate Empty Void Map with Isolated Sky Islands
         const world = [];
         for (let r = 0; r < WORLD_ROWS; r++) {
             world[r] = [];
-            for (let c = 0; c < WORLD_COLS; c++) {
-                world[r][c] = 0; // Everything default initialized to Void Air space
+            for (let c = 0; c < WORLD_COLS; c++) world[r][c] = 0;
+        }
+
+        // Generate Player 1 Island (Left Side)
+        for (let r = 11; r <= 13; r++) {
+            for (let c = 1; c <= 5; c++) world[r][c] = 1;
+        }
+        world[10][2] = 4; // Place Blue Bed
+
+        // Generate Player 2 Island (Right Side)
+        for (let r = 11; r <= 13; r++) {
+            for (let c = 24; c <= 28; c++) world[r][c] = 1;
+        }
+        world[10][27] = 5; // Place Green Bed
+        const p1 = {
+            id: 1,
+            x: 64, y: 200,
+            width: 20, height: 38,
+            vx: 0, vy: 0,
+            speed: 4, gravity: 0.35, jumpForce: -8.5,
+            grounded: false, bedAlive: true, kills: 0,
+            spawnX: 64, spawnY: 200, blockType: 2
+        };
+
+        const p2 = {
+            id: 2,
+            x: 870, y: 200,
+            width: 20, height: 38,
+            vx: 0, vy: 0,
+            speed: 4, gravity: 0.35, jumpForce: -8.5,
+            grounded: false, bedAlive: true, kills: 0,
+            spawnX: 870, spawnY: 200, blockType: 3
+        };
+
+        const keys = {};
+        window.addEventListener("keydown", e => keys[e.code] = true);
+        window.addEventListener("keyup", e => keys[e.code] = false);
+
+        const p1BedText = document.getElementById("p1Bed");
+        const p2BedText = document.getElementById("p2Bed");
+        const p1KillsText = document.getElementById("p1Kills");
+        const p2KillsText = document.getElementById("p2Kills");
+        // Auto-Bridge module to automatically build under-foot blocks
+        function autoPlaceBlocks(player) {
+            const centerX = player.x + player.width / 2;
+            const bottomY = player.y + player.height + 2;
+
+            const c = Math.floor(centerX / BLOCK_SIZE);
+            const r = Math.floor(bottomY / BLOCK_SIZE);
+
+            if (r >= 0 && r < WORLD_ROWS && c >= 0 && c < WORLD_COLS) {
+                // If walking over empty space, instantly drop team color block
+                if (world[r][c] === 0) {
+                    world[r][c] = player.blockType;
+                }
             }
         }
 
-        // Build Player's Left Spawn Base Island
-        for (let r = 10; r <= 13; r++) {
-            for (let c = 2; c <= 8; c++) world[r][c] = 1;
+        // Simple bounding box checks to trigger combat or bed destructions
+        function checkPlayerCombat() {
+            // Check if Player 1 steps on Player 2's Green Bed
+            let p1ColC = Math.floor((p1.x + p1.width/2) / BLOCK_SIZE);
+            let p1RowR = Math.floor((p1.y + p1.height/2) / BLOCK_SIZE);
+            if (world[p1RowR][p1ColC] === 5) {
+                world[p1RowR][p1ColC] = 0; // Bed broken!
+                p2.bedAlive = false;
+                p2BedText.textContent = "❌ DESTROYED";
+                p2BedText.style.color = "#ff7b72";
+            }
+
+            // Check if Player 2 steps on Player 1's Blue Bed
+            let p2ColC = Math.floor((p2.x + p2.width/2) / BLOCK_SIZE);
+            let p2RowR = Math.floor((p2.y + p2.height/2) / BLOCK_SIZE);
+            if (world[p2RowR][p2ColC] === 4) {
+                world[p2RowR][p2ColC] = 0; // Bed broken!
+                p1.bedAlive = false;
+                p1BedText.textContent = "❌ DESTROYED";
+                p1BedText.style.color = "#ff7b72";
+            }
+
+            // Sword fight calculation: check if player avatars overlap
+            if (p1.x < p2.x + p2.width && p1.x + p1.width > p2.x &&
+                p1.y < p2.y + p2.height && p1.y + p1.height > p2.y) {
+                // The player moving faster horizontally knocks out the other
+                if (Math.abs(p1.vx) > Math.abs(p2.vx)) {
+                    killPlayer(p2, p1);
+                } else if (Math.abs(p2.vx) > Math.abs(p1.vx)) {
+                    killPlayer(p1, p2);
+                }
+            }
         }
-        world[9][3] = 4; // Spawn the Shop Keeper NPC Entity
-        world[9][6] = 5; // Place Your Red Team Respawn Bed
+        function checkCollision(px, py, player) {
+            const left = Math.floor(px / BLOCK_SIZE);
+            const right = Math.floor((px + player.width) / BLOCK_SIZE);
+            const top = Math.floor(py / BLOCK_SIZE);
+            const bottom = Math.floor((py + player.height) / BLOCK_SIZE);
 
-        // Build Enemy's Right Rush Island 
-        for (let r = 10; r <= 13; r++) {
-            for (let c = 50; c <= 56; c++) world[r][c] = 1;
-        }
-        world[9][53] = 6; // Place Enemy Target Team Bed Object
-
-        // Automatic Iron Resource Spawner Engine (Generates iron at base every 2 seconds)
-        setInterval(() => {
-            ironCount += 1;
-            ironText.textContent = ironCount;
-        }, 2000);
-
-        // Inputs Configuration Matrix
-        window.addEventListener("keydown", e => {
-            keys[e.code] = true;
-            if (e.key === "1") selectSlot(1);
-            if (e.key === "2") selectSlot(2);
-            if (e.key === "3") selectSlot(3);
-            if (e.code === "KeyE") handleShopKey();
-        });
-        window.addEventListener("keyup", e => keys[e.code] = false);
-
-        function selectSlot(id) {
-            selectedSlot = id;
-            document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
-            document.getElementById(`slot-${id}`).classList.add('active');
+            for (let r = top; r <= bottom; r++) {
+                for (let c = left; c <= right; c++) {
+                    if (r >= 0 && r < WORLD_ROWS && c >= 0 && c < WORLD_COLS) {
+                        if (world[r][c] !== 0) return true;
+                    }
+                }
+            }
+            return false;
         }
 
-        // Shop Management Logic Channels
-        function handleShopKey() {
-            if (shopUI.style.display === "flex") {
-                toggleShop(false);
+        function updatePlayerPhysics(p, leftKey, rightKey, upKey) {
+            p.vx = 0;
+            if (keys[leftKey]) p.vx = -p.speed;
+            if (keys[rightKey]) p.vx = p.speed;
+
+            p.x += p.vx;
+            if (checkCollision(p.x, p.y, p)) p.x -= p.vx;
+
+            p.vy += p.gravity;
+            if (keys[upKey] && p.grounded) {
+                p.vy = p.jumpForce;
+                p.grounded = false;
+            }
+
+            p.y += p.vy;
+            if (checkCollision(p.x, p.y, p)) {
+                if (p.vy > 0) p.grounded = true;
+                p.y -= p.vy;
+                p.vy = 0;
             } else {
-                // Verify proximity check parameters relative to NPC cell node placement
-Use code with caution.const pCellX = Math.floor((player.x + player.width/2) / BLOCK_SIZE);const pCellY = Math.floor((player.y + player.height/2) / BLOCK_SIZE);let nearNPC = false;// Scan immediate surroundings for active Block ID 4for (let r = pCellY-2; r <= pCellY+2; r++) {for (let c = pCellX-2; c <= pCellX+2; c++) {if (r >= 0 && r < WORLD_ROWS && c >= 0 && c < WORLD_COLS && world[r][c] === 4) {nearNPC = true;}}}if (nearNPC) toggleShop(true);}}function toggleShop(show) {shopUI.style.display = show ? "flex" : "none";}window.buyItem = function(item, cost, amount) {if (ironCount >= cost) {ironCount -= cost;ironText.textContent = ironCount;if (item === 'blocks') {inventory.blocks += amount;} else if (item === 'pickaxe') {inventory.hasPickaxe = true;document.getElementById("slot-2").style.color = "#2ecc71";} else if (item === 'sword') {inventory.hasSword = true;document.getElementById("slot-3").style.color = "#2ecc71";}updateUIStrings();} else {alert("Not enough Iron! Wait for your base forge generator to spawn more.");}}function updateUIStrings() {blockCountText.textContent = inventory.blocks;}updateUIStrings();// Canvas Intersect Handling (Break and Build Game State Management)canvas.addEventListener("contextmenu", e => e.preventDefault());canvas.addEventListener("mousedown", e => {const rect = canvas.getBoundingClientRect();const mouseX = e.clientX - rect.left + camera.x;const mouseY = e.clientY - rect.top + camera.y;const c = Math.floor(mouseX / BLOCK_SIZE);const r = Math.floor(mouseY / BLOCK_SIZE);if (r >= 0 && r < WORLD_ROWS && c >= 0 && c < WORLD_COLS) {if (e.button === 0) { // Left Click: Destroy/Mine mechanicsconst block = world[r][c];if (block === 2 || (block === 1 && inventory.hasPickaxe)) {world[r][c] = 0; // Clear tile object} else if (block === 6) { // Enemy Bed mined!world[r][c] = 0;enemyBedAlive = false;enemyBedStatusText.textContent = "❌ DESTROYED";enemyBedStatusText.style.color = "#e74c3c";alert("ENEMY BED DESTROYED! Go finish them off!");} else if (block === 5) { // Smashed your own bed checkworld[r][c] = 0;bedAlive = false;bedStatusText.textContent = "❌ DESTROYED";bedStatusText.style.color = "#e74c3c";}} else if (e.button === 2) { // Right Click: Bridging and placementif (world[r][c] === 0 && selectedSlot === 1 && inventory.blocks > 0) {// Prevent player overlapping collision check validation parametersconst bX = c * BLOCK_SIZE;const bY = r * BLOCK_SIZE;if (!(player.x < bX + BLOCK_SIZE && player.x + player.width > bX &&player.y < bY + BLOCK_SIZE && player.y + player.height > bY)) {world[r][c] = 2; // Instantiate grey wool blockinventory.blocks--;updateUIStrings();}}}}});function checkCollision(px, py) {const left = Math.floor(px / BLOCK_SIZE);const right = Math.floor((px + player.width) / BLOCK_SIZE);const top = Math.floor(py / BLOCK_SIZE);const bottom = Math.floor((py + player.height) / BLOCK_SIZE);for (let r = top; r <= bottom; r++) {for (let c = left; c <= right; c++) {if (r >= 0 && r < WORLD_ROWS && c >= 0 && c < WORLD_COLS) {// All non-zero entries excluding air or background triggers are evaluated solidif (world[r][c] !== 0) return true;}}}return false;}function respawnPlayer() {player.x = 160;player.y = 200;player.vx = 0;player.vy = 0;// Clear out some resources as inventory death penalty variablesinventory.blocks = Math.max(0, inventory.blocks - 8);updateUIStrings();if (!bedAlive) {alert("GAME OVER! Your bed was missing and you fell into the deep void.");// Hard reset engine configuration defaultsbedAlive = true; enemyBedAlive = true;bedStatusText.textContent = "❤️ ALIVE"; bedStatusText.style.color = "#2ecc71";enemyBedStatusText.textContent = "❤️ ALIVE"; enemyBedStatusText.style.color = "#2ecc71";location.reload();}}// Processing Runtime State Iteration Loopfunction update() {player.vx = 0;if (keys["KeyA"] || keys["ArrowLeft"]) player.vx = -player.speed;if (keys["KeyD"] || keys["ArrowRight"]) player.vx = player.speed;player.x += player.vx;if (checkCollision(player.x, player.y)) player.x -= player.vx;player.vy += player.gravity;if ((keys["KeyW"] || keys["Space"] || keys["ArrowUp"]) && player.grounded) {player.vy = player.jumpForce;player.grounded = false;}player.y += player.vy;if (checkCollision(player.x, player.y)) {if (player.vy > 0) player.grounded = true;player.y -= player.vy;player.vy = 0;} else {player.grounded = false;}// Map Bounds Border Verification + Void Fall Detection Outlinesif (player.x < 0) player.x = 0;if (player.x + player.width > WORLD_COLS * BLOCK_SIZE) player.x = WORLD_COLS * BLOCK_SIZE - player.width;// Check if player plummeted below screen dimensions into the outer void limitsif (player.y > WORLD_ROWS * BLOCK_SIZE) {respawnPlayer();}// Smooth Interpolated Fluid Camera Track Processing Configurationscamera.x += ((player.x - canvas.width / 2) - camera.x) * 0.1;camera.y += ((player.y - canvas.height / 2) - camera.y) * 0.1;if (camera.x < 0) camera.x = 0;if (camera.x > WORLD_COLS * BLOCK_SIZE - canvas.width) camera.x = WORLD_COLS * BLOCK_SIZE - canvas.width;if (camera.y < 0) camera.y = 0;if (camera.y > WORLD_ROWS * BLOCK_SIZE - canvas.height) camera.y = WORLD_ROWS * BLOCK_SIZE - canvas.height;// RENDER CORE VIEW CHANNELSctx.clearRect(0, 0, canvas.width, canvas.height);ctx.save();ctx.translate(-camera.x, -camera.y);// Draw Background Void Matrix Cloudsctx.fillStyle = "#112233";ctx.fillRect(0, 14 * BLOCK_SIZE, WORLD_COLS * BLOCK_SIZE, 6 * BLOCK_SIZE);// Build Matrix Map Coordinates Systemfor (let r = 0; r < WORLD_ROWS; r++) {for (let c = 0; c < WORLD_COLS; c++) {const blockType = world[r][c];if (blockType !== 0) {let bx = c * BLOCK_SIZE;let by = r * BLOCK_SIZE;ctx.fillStyle = COLORS[blockType];ctx.fillRect(bx, by, BLOCK_SIZE, BLOCK_SIZE);// Rendering Detailing Overlaysif (blockType === 4) { // Shopkeeper Node Stylingctx.fillStyle = "#e67e22";ctx.fillRect(bx + 8, by + 4, 24, 12); // Hood}if (blockType === 5 || blockType === 6) { // Bed Texturing Elementsctx.fillStyle = "#ffffff";ctx.fillRect(bx + 2, by + 18, BLOCK_SIZE - 4, 8); // Pillow accents}ctx.strokeStyle = "rgba(255,255,255,0.05)";ctx.strokeRect(bx, by, BLOCK_SIZE, BLOCK_SIZE);}}}// Render Player Avatar Model Layout Nodesctx.fillStyle = "#3498db"; // Bedwars Team Blue Tunic Armor Suitctx.fillRect(player.x, player.y + 12, player.width, 20);ctx.fillStyle = "#e0a080"; // Skin Profile Node Headctx.fillRect(player.x + 4, player.y, 16, 12);ctx.fillStyle = "#2c3e50"; // Bootsctx.fillRect(player.x + 2, player.y + 32, player.width - 4, 12);ctx.restore();requestAnimationFrame(update);}update();
+                p.grounded = false;
+            }
+
+            // Map Edge Constraints
+            if (p.x < 0) p.x = 0;
+            if (p.x + p.width > canvas.width) p.x = canvas.width - p.width;
+
+            // Void Elimination Trigger
+            if (p.y > canvas.height) {
+                killPlayer(p, null);
+            }
+        }
+        function killPlayer(victim, attacker) {
+            if (attacker) {
+                attacker.kills++;
+                p1KillsText.textContent = p1.kills;
+                p2KillsText.textContent = p2.kills;
+            }
+
+            if (!victim.bedAlive) {
+                alert(`GAME OVER! Player ${victim.id === 1 ? '2 (Green)' : '1 (Blue)'} wins the match!`);
+                location.reload();
+            } else {
+                victim.x = victim.spawnX;
+                victim.y = victim.spawnY;
+                victim.vx = 0; victim.vy = 0;
+            }
+        }
+
+        function gameLoop() {
+            // Run physics states for both players independently
+            updatePlayerPhysics(p1, "KeyA", "KeyD", "KeyW");
+            updatePlayerPhysics(p2, "ArrowLeft", "ArrowRight", "ArrowUp");
+
+            // Deploy auto-bridging blocks under foot coordinates
+            autoPlaceBlocks(p1);
+            autoPlaceBlocks(p2);
+
+            checkPlayerCombat();
+
+            // Clear Scene Canvas Screen
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Base Islands & Placed Bridging Tiles
+            for (let r = 0; r < WORLD_ROWS; r++) {
+                for (let c = 0; c < WORLD_COLS; c++) {
+                    const type = world[r][c];
+                    if (type !== 0) {
+                        ctx.fillStyle = COLORS[type];
+                        ctx.fillRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                        
+                        // Add visible block frame accents
+                        ctx.strokeStyle = "rgba(0,0,0,0.3)";
+                        ctx.strokeRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                }
+            }
+
+            // Draw Player 1 (Blue Character Model)
+            ctx.fillStyle = "#58a6ff";
+            ctx.fillRect(p1.x, p1.y, p1.width, p1.height);
+
+            // Draw Player 2 (Green Character Model)
+            ctx.fillStyle = "#56d364";
+            ctx.fillRect(p2.x, p2.y, p2.width, p2.height);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Run Match Framework
+        gameLoop();
+    </script>
+</body>
+</html>
