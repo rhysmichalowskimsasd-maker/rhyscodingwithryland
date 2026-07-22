@@ -2,378 +2,358 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Ultimate OP Blue Bed Wars 2D</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced 2D HTML Minecraft</title>
     <style>
-        body { margin: 0; background: #111; color: #fff; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; user-select: none; overflow: hidden; }
-        #game-container { position: relative; margin-top: 15px; }
-        canvas { display: block; background: #70b5ff; border: 4px solid #444; border-radius: 4px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        canvas:fullscreen { width: 100vw; height: 100vh; border: none; background: #70b5ff; }
-        #ui { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; pointer-events: none; }
-        .card { background: rgba(20, 20, 20, 0.88); padding: 12px; border-radius: 6px; font-size: 14px; border: 2px solid #555; line-height: 1.4; width: 220px; pointer-events: auto; }
-        .p1-c { border-left: 6px solid #ff3333; } 
-        .p2-c { border-right: 6px solid #3333ff; text-align: right; border-top: 3px dashed #00e5ff; } /* OP Blue indicator */
-        .shop-list { margin-top: 5px; font-size: 11px; color: #bbb; text-align: left; }
-        .p2-c .shop-list { text-align: right; }
-        .highlight { color: #ffd700; font-weight: bold; }
-        #scoreboard { position: absolute; top: 180px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 15, 0.9); border: 2px solid #555; padding: 10px; border-radius: 6px; width: 200px; font-size: 13px; text-align: center; }
-        .sb-title { color: #ffd700; font-weight: bold; margin-bottom: 6px; }
-        .sb-row { display: flex; justify-content: space-between; margin: 4px 0; font-weight: bold; }
-        #victory { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; font-size: 40px; font-weight: bold; border-radius: 4px; z-index: 10; }
-        #restart { background: #28a745; color: #fff; border: none; padding: 10px 20px; font-size: 18px; cursor: pointer; border-radius: 5px; margin-top: 20px; font-family: inherit; font-weight: bold; }
-        #footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #222; border-top: 3px solid #444; padding: 10px; display: flex; justify-content: space-around; font-size: 13px; font-weight: bold; z-index: 20; }
-        .key-badge { background: #444; padding: 2px 6px; border-radius: 4px; border: 1px solid #666; }
-        .fs-container { margin-top: 10px; display: flex; justify-content: center; }
-        .fs-btn { background: #e67e22; color: #fff; border: 2px solid #d35400; padding: 6px 12px; font-size: 13px; font-family: inherit; font-weight: bold; cursor: pointer; border-radius: 4px; }
-        .fs-btn:hover { background: #d35400; }
+        body {
+            margin: 0;
+            background-color: #0b1d3a;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        canvas {
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
+            background-color: #4ba3e3;
+            transition: filter 0.3s;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        h2 { margin: 0; font-size: 24px; letter-spacing: 1px; color: #f1c40f; }
+        p { margin: 0; font-size: 14px; opacity: 0.9; }
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            pointer-events: auto;
+            transition: all 0.2s;
+        }
+        button:hover { background: white; color: black; transform: scale(1.05); }
+        #hotbar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            background: rgba(0,0,0,0.6);
+            padding: 6px;
+            border-radius: 6px;
+            border: 2px solid #333;
+            gap: 6px;
+        }
+        .slot {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #555;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        .slot.active {
+            border-color: #f1c40f;
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 0 10px #f1c40f;
+        }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <canvas id="gameCanvas" width="960" height="460"></canvas>
-        <div id="ui">
-            <!-- RED PLAYER HUD -->
-            <div class="card p1-c">
-                <b style="color:#ff3333;">RED (P1)</b><br>
-                HP: <span id="p1-hp">100</span>% | Bed: <span id="p1-bed">OK</span><br>
-                Blocks: <span id="p1-bl">20</span> | Iron: <span id="p1-ir">0</span><br>
-                Sword: <span id="p1-sw">Wood</span> | Armor: <span id="p1-ar">None</span>
-                <div class="shop-list">
-                    <b>HOTKEY SHOP:</b><br>
-                    Press <span class="highlight">[1]</span> Stone Sword (4 Iron)<br>
-                    Press <span class="highlight">[2]</span> Chainmail (6 Iron)
-                </div>
-            </div>
-            <!-- BLUE PLAYER HUD (OVERPOWERED SPECS) -->
-            <div class="card p2-c">
-                <b style="color:#3333ff;">BLUE (P2) <span style="color:#00e5ff;">[GOD MOD]</span></b><br>
-                HP: <span id="p2-hp">100</span>% | Bed: <span id="p2-bed">OK</span><br>
-                Blocks: <span id="p2-bl">20</span> | Iron: <span id="p2-ir">0</span><br>
-                Sword: <span id="p2-sw">Wood</span> | Armor: <span id="p2-ar">None</span>
-                <div class="shop-list">
-                    <b>HOTKEY SHOP:</b><br>
-                    Press <span class="highlight">[B]</span> Stone Sword (4 Iron)<br>
-                    Press <span class="highlight">[N]</span> Chainmail (6 Iron)
-                </div>
-            </div>
-        </div>
 
-        <!-- STATS SIDEBAR SCOREBOARD -->
-        <div id="scoreboard">
-            <div class="sb-title">== MATCH STATS ==</div>
-            <div class="sb-row" style="color:#ff3333;"><span>RED Kills:</span> <span id="sb-p1-k">0</span></div>
-            <div class="sb-row" style="color:#ff3333;"><span>RED Beds Brk:</span> <span id="sb-p1-b">0</span></div>
-            <div style="border-top: 1px solid #444; margin: 5px 0;"></div>
-            <div class="sb-row" style="color:#3333ff;"><span>BLUE Kills:</span> <span id="sb-p2-k">0</span></div>
-            <div class="sb-row" style="color:#3333ff;"><span>BLUE Beds Brk:</span> <span id="sb-p2-b">0</span></div>
-        </div>
-
-        <div id="victory"><div id="vic-txt"></div><button id="restart" onclick="resetGame()">PLAY AGAIN</button></div>
+    <div id="ui-layer">
+        <h2>MINECRAFT 2D PRO</h2>
+        <p><b>A / D / Space</b>: Move & Jump</p>
+        <p><b>Left Click</b>: Break Block</p>
+        <p><b>Right Click</b>: Place Selected Block</p>
+        <p><b>Keys 1, 2, 3</b>: Change Selected Block</p>
     </div>
 
-    <div class="fs-container">
-        <button class="fs-btn" onclick="toggleFullscreen()">GO FULLSCREEN</button>
+    <div id="hotbar">
+        <div class="slot active" id="slot-1" style="background-color: #557a2b;">1</div>
+        <div class="slot" id="slot-2" style="background-color: #866043;">2</div>
+        <div class="slot" id="slot-3" style="background-color: #737373;">3</div>
     </div>
 
-    <!-- BOTTOM INFO BAR -->
-    <div id="footer-bar">
-        <div><b style="color:#ff3333;">RED (P1):</b> Move: <span class="key-badge">A</span>/<span class="key-badge">D</span> | Jump: <span class="key-badge">W</span> | <span style="color:#ffd700;">Place Under:</span> <span class="key-badge">S</span> | Attack: <span class="key-badge">F</span></div>
-        <div style="color: #ffd700; text-align:center;">🔥 FIXED BRIDGES & SHOP Mechanics 🔥<br>Warning: Blue player is tuned to be highly Overpowered!</div>
-        <div><b style="color:#3333ff;">BLUE (P2):</b> Move: <span class="key-badge">←</span>/<span class="key-badge">→</span> | Jump: <span class="key-badge">↑</span> | <span style="color:#ffd700;">Place Under:</span> <span class="key-badge">↓</span> | Attack: <span class="key-badge">/</span></div>
+    <div class="controls">
+        <button id="fullscreenBtn">Toggle Fullscreen</button>
     </div>
+
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
-        const TILE = 24, GRAVITY = 0.38;
-        const GRID_W = canvas.width / TILE, GRID_H = canvas.height / TILE;
+        const fullscreenBtn = document.getElementById("fullscreenBtn");
 
-        const BLOCKS = { AIR: 0, STONE: 1, FORGE: 2, P1_BED: 3, P2_BED: 4, RED_WOOL: 5, BLUE_WOOL: 6 };
-        const COLORS = { 0: "transparent", 1: "#555555", 2: "#aaaaaa", 3: "#d32f2f", 4: "#1976d2", 5: "#ef5350", 6: "#42a5f5" };
+        // Game World Configuration
+        const BLOCK_SIZE = 40;
+        const WORLD_COLS = 150; 
+        const WORLD_ROWS = 40;
+        
+        const COLORS = {
+            0: "transparent", 
+            1: "#557a2b", // Grass
+            2: "#866043", // Dirt
+            3: "#737373"  // Stone
+        };
 
-        let grid = [], p1, p2, forgeTimer = 0, gameOver = false;
-        let stats = { p1K: 0, p1B: 0, p2K: 0, p2B: 0 };
+        let selectedBlock = 1;
+
+        // Player Physical Attributes
+        const player = {
+            x: 400,
+            y: 100,
+            width: 24,
+            height: 44,
+            vx: 0,
+            vy: 0,
+            speed: 5,
+            gravity: 0.4,
+            jumpForce: -9.5,
+            grounded: false
+        };
+
+        // Smooth Camera Tracker
+        const camera = { x: 0, y: 0 };
         const keys = {};
 
-        window.addEventListener("keydown", e => { 
-            const k = e.key.toLowerCase(); keys[k] = true; 
-            if (!gameOver) {
-                if (k === '1') buyItem(1, 'sword'); if (k === '2') buyItem(1, 'armor');
-                if (k === 'b') buyItem(2, 'sword'); if (k === 'n') buyItem(2, 'armor');
-                if (k === 's') placeUnderFeet(p1, BLOCKS.RED_WOOL);
-                if (k === 'f') performAction(p1, p2);
-                if (k === 'arrowdown') placeUnderFeet(p2, BLOCKS.BLUE_WOOL);
-                if (k === '/') performAction(p2, p1);
+        // Generate Procedural Landscape Map Matrix
+        const world = [];
+        for (let r = 0; r < WORLD_ROWS; r++) {
+            world[r] = [];
+            for (let c = 0; c < WORLD_COLS; c++) {
+                let surfaceHeight = Math.floor(15 + Math.sin(c * 0.15) * 4 + Math.cos(c * 0.05) * 2);
+                
+                if (r > surfaceHeight + 4) {
+                    world[r][c] = 3; // Stone base layers
+                } else if (r > surfaceHeight) {
+                    world[r][c] = 2; // Dirt block layers
+                } else if (r === surfaceHeight) {
+                    world[r][c] = 1; // Top surface grass
+                } else {
+                    world[r][c] = 0; // Empty atmospheric air
+                }
+            }
+        }
+        // Keyboard Listener Core Matrix
+        window.addEventListener("keydown", e => {
+            keys[e.code] = true;
+            if (e.key === "1") switchBlock(1);
+            if (e.key === "2") switchBlock(2);
+            if (e.key === "3") switchBlock(3);
+        });
+        window.addEventListener("keyup", e => keys[e.code] = false);
+
+        function switchBlock(id) {
+            selectedBlock = id;
+            document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
+            document.getElementById(`slot-${id}`).classList.add('active');
+        }
+
+        // Mouse Breaking and Placing Engine
+        canvas.addEventListener("contextmenu", e => e.preventDefault());
+        canvas.addEventListener("mousedown", e => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const mouseX = (e.clientX - rect.left) * scaleX + camera.x;
+            const mouseY = (e.clientY - rect.top) * scaleY + camera.y;
+
+            const c = Math.floor(mouseX / BLOCK_SIZE);
+            const r = Math.floor(mouseY / BLOCK_SIZE);
+
+            if (r >= 0 && r < WORLD_ROWS && c >= 0 && c < WORLD_COLS) {
+                if (e.button === 0) {
+                    world[r][c] = 0; // Destroy block on Left Click
+                } else if (e.button === 2) {
+                    if (world[r][c] === 0) world[r][c] = selectedBlock; // Build block on Right Click
+                }
             }
         });
-        window.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
 
-        function initGrid() {
-            grid = [];
-            for (let r = 0; r < GRID_H; r++) {
-                grid[r] = [];
-                for (let c = 0; c < GRID_W; c++) {
-                    let type = BLOCKS.AIR;
-                    if (r === 14 && ((c >= 1 && c <= 7) || (c >= 32 && c <= 38))) type = BLOCKS.STONE; 
-                    if (r === 16 && c >= 14 && c <= 25) type = BLOCKS.STONE; 
-                    if (r === 15 && (c === 19 || c === 20)) type = BLOCKS.FORGE; 
-                    if (r === 13 && c === 2) type = BLOCKS.P1_BED; 
-                    if (r === 13 && c === 37) type = BLOCKS.P2_BED; 
-                    grid[r][c] = type;
-                }
+        // Fullscreen Scaling Control Engine
+        fullscreenBtn.addEventListener("click", () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert(`Error: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        function resizeCanvas() {
+            if (document.fullscreenElement) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            } else {
+                canvas.width = 960;
+                canvas.height = 540;
             }
         }
+        window.addEventListener("resize", resizeCanvas);
+        document.addEventListener("fullscreenchange", resizeCanvas);
+        // Standard AABB Block Intersect Matrix Collision Checking
+        function checkCollision(px, py) {
+            const left = Math.floor(px / BLOCK_SIZE);
+            const right = Math.floor((px + player.width) / BLOCK_SIZE);
+            const top = Math.floor(py / BLOCK_SIZE);
+            const bottom = Math.floor((py + player.height) / BLOCK_SIZE);
 
-        class Player {
-            constructor(x, y, color, team) {
-                this.spawnX = x; this.spawnY = y; this.x = x; this.y = y;
-                this.vx = 0; this.vy = 0; this.w = 16; this.h = 26;
-                this.color = color; this.team = team; this.hp = 100;
-                this.blocks = 20; this.iron = 0; this.swordTier = 0; this.armorTier = 0;
-            }
-            reset() { this.x = this.spawnX; this.y = this.spawnY; this.vx = 0; this.vy = 0; this.hp = 100; }
-            update() {
-                this.vy += GRAVITY; this.x += this.vx; this.collide(this.vx, 0); this.y += this.vy; this.collide(0, this.vy);
-                if (this.y > canvas.height) this.respawnOrDie(this.team === 1 ? 2 : 1);
-                let currentCc = Math.floor((this.x + this.w / 2) / TILE);
-                if (this.iron >= 2) {
-                    if ((this.team === 1 && currentCc <= 7) || (this.team === 2 && currentCc >= 32)) { this.iron -= 2; this.blocks += 5; }
-                }
-            }
-            collide(vx, vy) {
-                for (let r = 0; r < GRID_H; r++) {
-                    for (let c = 0; c < GRID_W; c++) {
-                        if (grid[r][c] !== BLOCKS.AIR) {
-                            let bx = c * TILE, by = r * TILE;
-                            if (this.x < bx + TILE && this.x + this.w > bx && this.y < by + TILE && this.y + this.h > by) {
-                                if (vx > 0) this.x = bx - this.w; if (vx < 0) this.x = bx + TILE;
-                                if (vy > 0) { this.y = by - this.h; this.vy = 0; } if (vy < 0) { this.y = by + TILE; this.vy = 0; }
-                            }
-                        }
+            for (let r = top; r <= bottom; r++) {
+                for (let c = left; c <= right; c++) {
+                    if (r >= 0 && r < WORLD_ROWS && c >= 0 && c < WORLD_COLS) {
+                        if (world[r][c] !== 0) return true;
                     }
                 }
             }
-            respawnOrDie(attackerTeam) {
-                if (attackerTeam === 1) stats.p1K++;
-                if (attackerTeam === 2) stats.p2K++;
-                let targetBed = this.team === 1 ? BLOCKS.P1_BED : BLOCKS.P2_BED;
-                if (grid.some(row => row.includes(targetBed))) { this.reset(); } 
-                else { this.hp = 0; endGame(this.team === 1 ? 2 : 1); }
-            }
-        }
-        function handleMovement() {
-            if (gameOver) return;
-            // Red standard speed mechanics
-            p1.vx = keys['a'] ? -3.2 : (keys['d'] ? 3.2 : 0); if (keys['w'] && p1.vy === 0) p1.vy = -7.2;
-            // BLUE OP SPEED BUFF: Moves significantly faster!
-            p2.vx = keys['arrowleft'] ? -5.0 : (keys['arrowright'] ? 5.0 : 0); if (keys['arrowup'] && p2.vy === 0) p2.vy = -8.5;
+            return false;
         }
 
-        // FIXED PLACE METHOD: Guarantees blocks spawn directly under feet
-        function placeUnderFeet(p, blockType) {
-            if (p.blocks <= 0) return;
-            let c = Math.floor((p.x + p.w / 2) / TILE), r = Math.floor((p.y + p.h + 1) / TILE);
-            if (c >= 0 && c < GRID_W && r >= 0 && r < GRID_H && grid[r][c] === BLOCKS.AIR) { grid[r][c] = blockType; p.blocks--; }
-        }
+        // Automatic Infinite Block Bridging Mechanics Module
+        function autoPlaceBlocksUnderPlayer() {
+            const playerCenterX = player.x + player.width / 2;
+            const playerBottomY = player.y + player.height + 2; 
 
-        function performAction(attacker, opponent) {
-            let distance = Math.hypot((attacker.x + attacker.w/2) - (opponent.x + opponent.w/2), (attacker.y + attacker.h/2) - (opponent.y + opponent.h/2));
-            if (distance < 42) {
-                let damageAmount = attacker.swordTier === 0 ? 15 : 32;
-                let knockbackPower = 5;
-                
-                // BLUE OP MELEE COMBAT BUFF: Overwhelming Damage & Massive Knockback
-                if (attacker.team === 2) { damageAmount = 65; knockbackPower = 16; }
-                
-                let absorption = opponent.armorTier === 1 ? 0.35 : 0;
-                opponent.hp -= Math.round(damageAmount * (1 - absorption));
-                opponent.vx += (attacker.x < opponent.x ? 1 : -1) * knockbackPower; 
-                opponent.vy -= (attacker.team === 2 ? 4.5 : 2);
-                
-                if (opponent.hp <= 0) opponent.respawnOrDie(attacker.team); return;
-            }
-            
-            // BLUE OP REACH BUFF: Blue breaks blocks from twice as far away
-            let breakReach = attacker.team === 2 ? 30 : 12;
-            let lookAheadCol = Math.floor((attacker.x + (attacker.vx >= 0 ? attacker.w + breakReach : -breakReach)) / TILE);
-            let lookAheadRow = Math.floor((attacker.y + attacker.h / 2) / TILE);
-            
-            if (lookAheadCol >= 0 && lookAheadCol < GRID_W && lookAheadRow >= 0 && lookAheadRow < GRID_H) {
-                let targetedBlock = grid[lookAheadRow][lookAheadCol];
-                if (targetedBlock !== BLOCKS.AIR && targetedBlock !== BLOCKS.STONE && targetedBlock !== BLOCKS.FORGE) {
-                    if (targetedBlock === BLOCKS.P2_BED && attacker.team === 1) stats.p1B++;
-                    if (targetedBlock === BLOCKS.P1_BED && attacker.team === 2) stats.p2B++;
-                    grid[lookAheadRow][lookAheadCol] = BLOCKS.AIR;
+            const c = Math.floor(playerCenterX / BLOCK_SIZE);
+            const r = Math.floor(playerBottomY / BLOCK_SIZE);
+
+            // Generates an infinite safety platform trail while exploring air pockets
+            if (r >= 0 && r < WORLD_ROWS && c >= 0 && c < WORLD_COLS) {
+                if (world[r][c] === 0) {
+                    world[r][c] = 2; // Drops infinite dirt under character foot vectors
                 }
             }
         }
+        // Core Physics Calculation State Engine Loop
+        function update() {
+            // Horizontal Speed Calculations
+            player.vx = 0;
+            if (keys["KeyA"] || keys["ArrowLeft"]) player.vx = -player.speed;
+            if (keys["KeyD"] || keys["ArrowRight"]) player.vx = player.speed;
 
-        // FIXED SHOPPING LOGIC: Deducts materials correctly and immediately upgrades stats
-        function buyItem(team, itemType) {
-            let targetPlayer = team === 1 ? p1 : p2;
-            if (itemType === 'sword' && targetPlayer.iron >= 4 && targetPlayer.swordTier === 0) { targetPlayer.iron -= 4; targetPlayer.swordTier = 1; }
-            if (itemType === 'armor' && targetPlayer.iron >= 6 && targetPlayer.armorTier === 0) { targetPlayer.iron -= 6; targetPlayer.armorTier = 1; }
-        }
+            player.x += player.vx;
+            if (checkCollision(player.x, player.y)) player.x -= player.vx;
 
-        function toggleFullscreen() {
-            const container = document.getElementById("gameCanvas");
-            if (!document.fullscreenElement) { container.requestFullscreen().catch(err => { console.log(err.message); }); } 
-            else { document.exitFullscreen(); }
-        }
-
-        function updateGame() {
-            handleMovement(); p1.update(); p2.update(); forgeTimer++;
-            if (forgeTimer >= 75) { forgeTimer = 0;
-                for (let r = 0; r < GRID_H; r++) {
-                    for (let c = 0; c < GRID_W; c++) {
-                        if (grid[r][c] === BLOCKS.FORGE) {
-                            let bx = c * TILE + TILE/2, by = r * TILE + TILE/2;
-                            [p1, p2].forEach(p => { if (Math.hypot((p.x+p.w/2)-bx, (p.y+p.h/2)-by) < TILE * 3.5) p.iron++; });
-                        }
-                    }
-                }
+            // Gravity Constants and Vertical Jumping Inputs
+            player.vy += player.gravity;
+            if ((keys["KeyW"] || keys["Space"] || keys["ArrowUp"]) && player.grounded) {
+                player.vy = player.jumpForce;
+                player.grounded = false;
             }
-        }
 
-        function draw() {
+            player.y += player.vy;
+            if (checkCollision(player.x, player.y)) {
+                if (player.vy > 0) player.grounded = true;
+                player.y -= player.vy;
+                player.vy = 0;
+            } else {
+                player.grounded = false;
+            }
+
+            // Map Bounds Boundaries Locks
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > WORLD_COLS * BLOCK_SIZE) player.x = WORLD_COLS * BLOCK_SIZE - player.width;
+
+            // Run the block auto-placement engine
+            autoPlaceBlocksUnderPlayer();
+
+            // Smooth Interpolated Fluid Camera Calculations
+            camera.x += ((player.x - canvas.width / 2) - camera.x) * 0.1;
+            camera.y += ((player.y - canvas.height / 2) - camera.y) * 0.1;
+
+            if (camera.x < 0) camera.x = 0;
+            if (camera.x > WORLD_COLS * BLOCK_SIZE - canvas.width) camera.x = WORLD_COLS * BLOCK_SIZE - canvas.width;
+            if (camera.y < 0) camera.y = 0;
+            if (camera.y > WORLD_ROWS * BLOCK_SIZE - canvas.height) camera.y = WORLD_ROWS * BLOCK_SIZE - canvas.height;
+            // Main Render Layer Frame Processing
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let r = 0; r < GRID_H; r++) {
-                for (let c = 0; c < GRID_W; c++) {
-                    if (grid[r][c] !== BLOCKS.AIR) {
-                        ctx.fillStyle = COLORS[grid[r][c]]; ctx.fillRect(c * TILE, r * TILE, TILE, TILE);
-                        ctx.strokeStyle = "rgba(0,0,0,0.08)"; ctx.strokeRect(c * TILE, r * TILE, TILE, TILE);
-                        if (grid[r][c] === BLOCKS.P1_BED || grid[r][c] === BLOCKS.P2_BED) { ctx.fillStyle = "#ffffff"; ctx.fillRect(c * TILE + 2, r * TILE + 12, 16, 5); }
+
+            // Sky Background Linear Gradient Effect
+            let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGrad.addColorStop(0, "#1a4a75");
+            skyGrad.addColorStop(1, "#4ba3e3");
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
+
+            // Visible Blocks Field Culling Viewport Rendering Optimizer
+            for (let r = 0; r < WORLD_ROWS; r++) {
+                for (let c = 0; c < WORLD_COLS; c++) {
+                    const blockType = world[r][c];
+                    if (blockType !== 0) {
+                        let bx = c * BLOCK_SIZE;
+                        let by = r * BLOCK_SIZE;
+
+                        if (bx + BLOCK_SIZE > camera.x && bx < camera.x + canvas.width &&
+                            by + BLOCK_SIZE > camera.y && by < camera.y + canvas.height) {
+                            
+                            ctx.fillStyle = COLORS[blockType];
+                            ctx.fillRect(bx, by, BLOCK_SIZE, BLOCK_SIZE);
+
+                            // Texture Detailing Layer
+                            if (blockType === 1) { // Grass top accent highlights
+                                ctx.fillStyle = "#7db13b";
+                                ctx.fillRect(bx, by, BLOCK_SIZE, 6);
+                            }
+                            if (blockType === 2) { // Dirt noise pixel detailing
+                                ctx.fillStyle = "#6d4c33";
+                                ctx.fillRect(bx + 8, by + 12, 6, 6);
+                                ctx.fillRect(bx + 24, by + 26, 6, 6);
+                            }
+                            
+                            // Wireframe Grid Layout Accents
+                            ctx.strokeStyle = "rgba(0,0,0,0.12)";
+                            ctx.lineWidth = 1;
+                            ctx.strokeRect(bx, by, BLOCK_SIZE, BLOCK_SIZE);
+                        }
                     }
                 }
             }
-            ctx.fillStyle = p1.color; ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
-            ctx.fillStyle = p2.color; ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
 
-            let b1 = grid.some(r => r.includes(BLOCKS.P1_BED)), b2 = grid.some(r => r.includes(BLOCKS.P2_BED));
-            document.getElementById("p1-hp").innerText = Math.max(0, p1.hp); document.getElementById("p2-hp").innerText = Math.max(0, p2.hp);
-            document.getElementById("p1-bed").innerText = b1 ? "OK" : "DESTROYED"; document.getElementById("p2-bed").innerText = b2 ? "OK" : "DESTROYED";
-            document.getElementById("p1-bl").innerText = p1.blocks; document.getElementById("p2-bl").innerText = p2.blocks;
-            document.getElementById("p1-ir").innerText = p1.iron; document.getElementById("p2-ir").innerText = p2.iron;
-            document.getElementById("p1-sw").innerText = p1.swordTier === 1 ? "Stone" : "Wood"; document.getElementById("p2-sw").innerText = p2.swordTier === 1 ? "Stone" : "Wood";
-            document.getElementById("p1-ar").innerText = p1.armorTier === 1 ? "Chainmail" : "None"; document.getElementById("p2-ar").innerText = p2.armorTier === 1 ? "Chainmail" : "None";
-            
-            document.getElementById("sb-p1-k").innerText = stats.p1K; document.getElementById("sb-p2-k").innerText = stats.p2K;
-            document.getElementById("sb-p1-b").innerText = stats.p1B; document.getElementById("sb-p2-b").innerText = stats.p2B;
+            // Render Player Avatar (Steve Custom Multi-Node Model Layout)
+            ctx.fillStyle = "#e0a080"; // Flesh Head
+            ctx.fillRect(player.x + 4, player.y, 16, 12);
+            ctx.fillStyle = "#22a6b3"; // Teal Torso
+            ctx.fillRect(player.x, player.y + 12, player.width, 20);
+            ctx.fillStyle = "#30336b"; // Navy Blue Legs
+            ctx.fillRect(player.x + 2, player.y + 32, player.width - 4, 12);
+
+            ctx.restore();
+            requestAnimationFrame(update);
         }
 
-        function gameLoop() { updateGame(); draw(); requestAnimationFrame(gameLoop); }
-        function endGame(winnerTeam) { gameOver = true; document.getElementById("victory").style.display = "flex"; document.getElementById("vic-txt").innerText = winnerTeam === 1 ? "RED TEAM WINS!" : "BLUE TEAM WINS!"; document.getElementById("vic-txt").style.color = winnerTeam === 1 ? "#ff3333" : "#3333ff"; }
-        function resetGame() { document.getElementById("victory").style.display = "none"; gameOver = false; initGrid(); p1 = new Player(48, 220, "#ff3333", 1); p2 = new Player(890, 220, "#3333ff", 2); }
-        window.addEventListener("keydown", e => { 
-    // FIXED: Using e.key directly preserves uppercase/lowercase variations safely
-    const k = e.key.toLowerCase(); 
-    keys[k] = true; 
-    
-    if (!gameOver) {
-        // Red (P1) Keyboard Hotkey Shop
-        if (k === '1') buyItem(1, 'sword'); 
-        if (k === '2') buyItem(1, 'armor');
-        
-        // Blue (P2) Keyboard Hotkey Shop
-        if (k === 'b') buyItem(2, 'sword'); 
-        if (k === 'n') buyItem(2, 'armor');
-        
-        // RED BRIDGE FIX: Separated key checks to prevent overlap bugs
-        if (e.key === 's' || e.key === 'S') {
-            placeUnderFeet(p1, BLOCKS.RED_WOOL);
-        }
-        if (e.key === 'f' || e.key === 'F') {
-            performAction(p1, p2);
-        }
-        
-        // Blue Actions Tracking
-        if (e.key === 'ArrowDown') {
-            placeUnderFeet(p2, BLOCKS.BLUE_WOOL);
-        }
-        if (e.key === '/') {
-            performAction(p2, p1);
-        }
-    }
-});
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Flawless 2D Minecraft Bed Wars</title>
-    <style>
-        body { margin: 0; background: #111; color: #fff; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; user-select: none; overflow: hidden; }
-        #game-container { position: relative; margin-top: 15px; }
-        canvas { display: block; background: #70b5ff; border: 4px solid #444; border-radius: 4px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        canvas:fullscreen { width: 100vw; height: 100vh; border: none; background: #70b5ff; }
-        #ui { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; pointer-events: none; }
-        .card { background: rgba(20, 20, 20, 0.9); padding: 12px; border-radius: 6px; font-size: 14px; border: 2px solid #555; line-height: 1.4; width: 220px; pointer-events: auto; }
-        .p1-c { border-left: 6px solid #ff3333; } 
-        .p2-c { border-right: 6px solid #3333ff; text-align: right; border-top: 3px dashed #00e5ff; }
-        .shop-list { margin-top: 5px; font-size: 11px; color: #bbb; text-align: left; }
-        .p2-c .shop-list { text-align: right; }
-        .highlight { color: #ffd700; font-weight: bold; }
-        #scoreboard { position: absolute; top: 180px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 15, 0.9); border: 2px solid #555; padding: 10px; border-radius: 6px; width: 200px; font-size: 13px; text-align: center; }
-        .sb-title { color: #ffd700; font-weight: bold; margin-bottom: 6px; }
-        .sb-row { display: flex; justify-content: space-between; margin: 4px 0; font-weight: bold; }
-        #victory { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; font-size: 40px; font-weight: bold; border-radius: 4px; z-index: 10; }
-        #restart { background: #28a745; color: #fff; border: none; padding: 10px 20px; font-size: 18px; cursor: pointer; border-radius: 5px; margin-top: 20px; font-family: inherit; font-weight: bold; }
-        #footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #222; border-top: 3px solid #444; padding: 10px; display: flex; justify-content: space-around; font-size: 13px; font-weight: bold; z-index: 20; }
-        .key-badge { background: #444; padding: 2px 6px; border-radius: 4px; border: 1px solid #666; }
-        .fs-container { margin-top: 10px; display: flex; justify-content: center; }
-        .fs-btn { background: #e67e22; color: #fff; border: 2px solid #d35400; padding: 6px 12px; font-size: 13px; font-family: inherit; font-weight: bold; cursor: pointer; border-radius: 4px; }
-    </style>
-</head>
-<body>
-    <div id="game-container">
-        <canvas id="gameCanvas" width="960" height="460"></canvas>
-        <div id="ui">
-            <!-- RED HUD -->
-            <div class="card p1-c">
-                <b style="color:#ff3333;">RED (P1)</b><br>
-                HP: <span id="p1-hp">100</span>% | Bed: <span id="p1-bed">OK</span><br>
-                Blocks: <span id="p1-bl">20</span> | Iron: <span id="p1-ir">0</span><br>
-                Sword: <span id="p1-sw">Wood</span> | Armor: <span id="p1-ar">None</span>
-                <div class="shop-list">
-                    <b>SHOP HOTKEYS:</b><br>
-                    Press <span class="highlight">[1]</span> Stone Sword (4 Iron)<br>
-                    Press <span class="highlight">[2]</span> Chainmail (6 Iron)
-                </div>
-            </div>
-            <!-- BLUE HUD (OP) -->
-            <div class="card p2-c">
-                <b style="color:#3333ff;">BLUE (P2) <span style="color:#00e5ff;">[OP]</span></b><br>
-                HP: <span id="p2-hp">100</span>% | Bed: <span id="p2-bed">OK</span><br>
-                Blocks: <span id="p2-bl">20</span> | Iron: <span id="p2-ir">0</span><br>
-                Sword: <span id="p2-sw">Wood</span> | Armor: <span id="p2-ar">None</span>
-                <div class="shop-list">
-                    <b>SHOP HOTKEYS:</b><br>
-                    Press <span class="highlight">[B]</span> Stone Sword (4 Iron)<br>
-                    Press <span class="highlight">[N]</span> Chainmail (6 Iron)
-                </div>
-            </div>
-        </div>
-
-        <div id="scoreboard">
-            <div class="sb-title">== MATCH STATS ==</div>
-            <div class="sb-row" style="color:#ff3333;"><span>RED Kills:</span> <span id="sb-p1-k">0</span></div>
-            <div class="sb-row" style="color:#ff3333;"><span>RED Beds Brk:</span> <span id="sb-p1-b">0</span></div>
-            <div style="border-top: 1px solid #444; margin: 5px 0;"></div>
-            <div class="sb-row" style="color:#3333ff;"><span>BLUE Kills:</span> <span id="sb-p2-k">0</span></div>
-            <div class="sb-row" style="color:#3333ff;"><span>BLUE Beds Brk:</span> <span id="sb-p2-b">0</span></div>
-        </div>
-
-        <div id="victory"><div id="vic-txt"></div><button id="restart" onclick="resetGame()">PLAY AGAIN</button></div>
-    </div>
-
-    <div class="fs-container">
-        <button class="fs-btn" onclick="toggleFullscreen()">GO FULLSCREEN</button>
-    </div>
-
-    <div id="footer-bar">
-        <div><b style="color:#ff3333;">RED (P1):</b> Move: <span class="key-badge">A</span>/<span class="key-badge">D</span> | Jump: <span class="key-badge">W</span> | <span style="color:#ffd700;">Block Under:</span> <span class="key-badge">S</span> | Attack: <span class="key-badge">F</span></div>
-        <div style="color: #ffd700; text-align:center;">🔥 FLAWLESS BRIDGES FIXED 🔥</div>
-        <div><b style="color:#3333ff;">BLUE (P2):</b> Move: <span class="key-badge">←</span>/<span class="key-badge">→</span> | Jump: <span class="key-badge">↑</span> | <span style="color:#ffd700;">Block Under:</span> <span class="key-badge">↓</span> | Attack: <span class="key-badge">/</span></div>
-    </div>
-
-        resetGame(); gameLoop();
+        // Initialize Core Engine Startup
+        update();
     </script>
 </body>
 </html>
