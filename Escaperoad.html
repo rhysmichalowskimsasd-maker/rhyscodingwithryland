@@ -103,8 +103,8 @@
         let moneyItems = [];
 
         const keys = {};
-        window.addEventListener("keydown", e => keys[e.code] = true);
-        window.addEventListener("keyup", e => keys[e.code] = false);
+        window.addEventListener("keydown", e => { keys[e.code] = true; });
+        window.addEventListener("keyup", e => { keys[e.code] = false; });
 
         // Enemy Police Cruiser Generator
         function spawnPolice() {
@@ -169,7 +169,7 @@
             gameOverScreen.style.display = "none";
             gameLoop();
         }
-        function gameLoop() {}
+        function gameLoop() {
             if (isGameOver) return;
             gameFrame++;
 
@@ -292,7 +292,7 @@
             ctx.restore();
 
             requestAnimationFrame(gameLoop);
-        {}
+        }
 
         // Initialize Launch Instance
         gameLoop();
