@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bed Wars 2D - Working 2-Player Edition</title>
+    <title>Bed Wars 2D - Ultimate Showdown</title>
     <style>
         body {
             margin: 0;
@@ -94,6 +94,13 @@
                 <div class="stat-keys">Run: <b>Arrows</b> | Hit: <b>M</b> | Mine: <b>L</b></div>
             </div>
         </div>
+
+        <div id="central-shop">
+            <span>🛒 AUTO FORGE SHOP: Gather Iron at your base generator to automatically get sword upgrades!</span>
+        </div>
+
+        <canvas id="gameCanvas" width="1024" height="576"></canvas>
+    </div>
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
@@ -111,7 +118,7 @@
             5: "#22c55e"  // Green Bed Object Block
         };
 
-        // Clear world matrix instantiation loops
+        // Create the world map grid correctly
         const world = [];
         for (let r = 0; r < WORLD_ROWS; r++) {
             world[r] = [];
@@ -120,25 +127,26 @@
             }
         }
 
-        // Build Hard Solid Spawning Islands (Row 12 to 15)
+        // Build base islands (Rows 12 to 15)
         for (let r = 12; r <= 15; r++) {
             for (let c = 1; c <= 5; c++) world[r][c] = 1; 
             for (let c = 26; c <= 30; c++) world[r][c] = 1; 
         }
 
-        // Place Beds ON TOP of islands (Row 11) to avoid trapping the players inside blocks
-        world[11][2] = 4; // Player 1 Bed
-        world[11][28] = 5; // Player 2 Bed
+        // Safe direct matrix row/column injection for beds
+        world[11][2] = 4;  // Red Bed
+        world[11][29] = 5; // Green Bed
 
-        // Item Spawning Generators Configuration
+        // Set up resource generator arrays
         const generators = [
             { x: 3 * BLOCK_SIZE, y: 11 * BLOCK_SIZE, type: 'iron', timer: 0, interval: 40 },
             { x: 28 * BLOCK_SIZE, y: 11 * BLOCK_SIZE, type: 'iron', timer: 0, interval: 40 },
             { x: 16 * BLOCK_SIZE, y: 12 * BLOCK_SIZE, type: 'diamond', timer: 0, interval: 160 }
         ];
-        world[13][15] = 1; world[13][16] = 1; // Middle Diamond platform stone layer
+        world[13][15] = 1; // Middle diamond platform blocks
+        world[13][16] = 1;
 
-        // Player setups with corrected spawn height variables (y: 100)
+        // Player starting variables with safe height spawn locations
         const p1 = {
             id: 1, color: "#38bdf8", weaponColor: "#cbd5e1",
             x: 96, y: 100, width: 22, height: 42, vx: 0, vy: 0,
@@ -162,13 +170,6 @@
         const keys = {};
         window.addEventListener("keydown", e => keys[e.code] = true);
         window.addEventListener("keyup", e => keys[e.code] = false);
-
-        <div id="central-shop">
-            <span>🛒 AUTO FORGE SHOP: Stand near generators to collect Iron & Diamond upgrades!</span>
-        </div>
-
-        <canvas id="gameCanvas" width="1024" height="576"></canvas>
-    </div>
         function autoPlaceBlocks(p) {
             const centerX = p.x + p.width / 2;
             const bottomY = p.y + p.height + 2;
@@ -188,7 +189,7 @@
 
             if (r >= 0 && r < WORLD_ROWS && c >= 0 && c < WORLD_COLS) {
                 const targetType = world[r][c];
-                if (targetType === 2 || targetType === 3) world[r][c] = 0; // Destroy wool platform elements
+                if (targetType === 2 || targetType === 3) world[r][c] = 0; 
             }
         }
 
@@ -201,12 +202,11 @@
             p.hudIron.textContent = p.iron;
             p.hudSword.textContent = p.swordName;
         }
-
         function checkCombatAndObjectives() {
             if (p1.isAttacking) { p1.attackTimer--; if(p1.attackTimer <= 0) p1.isAttacking = false; }
             if (p2.isAttacking) { p2.attackTimer--; if(p2.attackTimer <= 0) p2.isAttacking = false; }
 
-            // Manual Strike Intersection Box Hits
+            // Weapon Combat Hitbox Intersections
             if (p1.isAttacking && p1.attackTimer === 8) {
                 let swordX = p1.facingDir === 1 ? p1.x + p1.width : p1.x - 24;
                 if (swordX + 24 > p2.x && swordX < p2.x + p2.width && p1.y + p1.height > p2.y && p1.y < p2.y + p2.height) {
@@ -223,7 +223,7 @@
                 }
             }
 
-            // Real-time Bed Status Checking Engine
+            // Real-Time Grid Checking for Bed Breaking
             let p1C = Math.floor((p1.x + p1.width/2) / BLOCK_SIZE);
             let p1R = Math.floor((p1.y + p1.height/2) / BLOCK_SIZE);
             if (p1R >= 0 && p1R < WORLD_ROWS && p1C >= 0 && p1C < WORLD_COLS && world[p1R][p1C] === 5) {
@@ -236,6 +236,16 @@
             }
         }
 
+        function killPlayer(victim, attacker) {
+            if (attacker) { attacker.kills++; attacker.hudKills.textContent = attacker.kills; }
+            if (!victim.bedAlive) {
+                alert(`👑 MATCH OVER! Player ${victim.id === 1 ? '2 (Green)' : '1 (Blue)'} wins the match!`);
+                location.reload();
+            } else {
+                victim.x = victim.spawnX; victim.y = victim.spawnY; victim.vx = 0; victim.vy = 0;
+                victim.iron = Math.floor(victim.iron / 2); victim.hudIron.textContent = victim.iron;
+            }
+        }
         function checkCollision(px, py, p) {
             const left = Math.floor(px / BLOCK_SIZE);
             const right = Math.floor((px + p.width) / BLOCK_SIZE);
@@ -273,23 +283,10 @@
             if (p.x + p.width > canvas.width) p.x = canvas.width - p.width;
             if (p.y > canvas.height) killPlayer(p, null);
         }
-
-        function killPlayer(victim, attacker) {
-            if (attacker) { attacker.kills++; attacker.hudKills.textContent = attacker.kills; }
-            if (!victim.bedAlive) {
-                alert(`👑 MATCH OVER! Player ${victim.id === 1 ? '2 (Green)' : '1 (Blue)'} wins!`);
-                location.reload();
-            } else {
-                victim.x = victim.spawnX; victim.y = victim.spawnY; victim.vx = 0; victim.vy = 0;
-                victim.iron = Math.floor(victim.iron / 2); victim.hudIron.textContent = victim.iron;
-            }
-        }
-
         function gameLoop() {
             updatePhysics(p1, "KeyA", "KeyD", "KeyW");
             updatePhysics(p2, "ArrowLeft", "ArrowRight", "ArrowUp");
 
-            // Register Hotkeys
             if (keys["KeyQ"] && !p1.isAttacking) { p1.isAttacking = true; p1.attackTimer = 10; }
             if (keys["KeyM"] && !p2.isAttacking) { p2.isAttacking = true; p2.attackTimer = 10; }
             if (keys["KeyE"]) { breakBlockInFront(p1); keys["KeyE"] = false; }
@@ -300,7 +297,7 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Item Drops Calculation Clocks
+            // Update Resource Generators
             generators.forEach(gen => {
                 gen.timer++; if (gen.timer >= gen.interval) gen.timer = 0;
                 ctx.fillStyle = gen.type === 'iron' ? "rgba(200,200,220,0.15)" : "rgba(56,189,248,0.2)";
@@ -312,7 +309,7 @@
                 });
             });
 
-            // Draw Block Graphics Frame
+            // Map Renderer Matrix loops
             for (let r = 0; r < WORLD_ROWS; r++) {
                 for (let c = 0; c < WORLD_COLS; c++) {
                     const type = world[r][c];
@@ -325,12 +322,12 @@
                 }
             }
 
-            // Render Player 1 Characters
+            // Draw Player 1 & Slash Effect Arc
             ctx.fillStyle = p1.color; ctx.fillRect(p1.x, p1.y, p1.width, p1.height);
             ctx.fillStyle = p1.weaponColor; ctx.fillRect(p1.x + (p1.facingDir === 1 ? p1.width : -8), p1.y + 16, 8, 4);
             if (p1.isAttacking) { ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.fillRect(p1.facingDir === 1 ? p1.x + p1.width : p1.x - 16, p1.y + 10, 16, 22); }
 
-            // Render Player 2 Characters
+            // Draw Player 2 & Slash Effect Arc
             ctx.fillStyle = p2.color; ctx.fillRect(p2.x, p2.y, p2.width, p2.height);
             ctx.fillStyle = p2.weaponColor; ctx.fillRect(p2.x + (p2.facingDir === 1 ? p2.width : -8), p2.y + 16, 8, 4);
             if (p2.isAttacking) { ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.fillRect(p2.facingDir === 1 ? p2.x + p2.width : p2.x - 16, p2.y + 10, 16, 22); }
